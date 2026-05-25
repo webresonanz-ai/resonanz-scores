@@ -12,6 +12,8 @@ export const useAuthStore = defineStore("auth", () => {
   const error = ref("");
 
   const isAuthenticated = computed(() => Boolean(token.value && user.value));
+  const isAdmin = computed(() => user.value?.role === "admin");
+  const isComposer = computed(() => user.value?.role === "composer");
 
   function persistToken(value) {
     token.value = value || "";
@@ -111,6 +113,8 @@ export const useAuthStore = defineStore("auth", () => {
     loading,
     error,
     isAuthenticated,
+    isAdmin,
+    isComposer,
     fetchProfile,
     login,
     register,

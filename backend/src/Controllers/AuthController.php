@@ -55,6 +55,7 @@ final class AuthController
             'name' => $name,
             'email' => $email,
             'password' => password_hash($password, PASSWORD_BCRYPT),
+            'role' => 'customer',
             'location' => $location,
             'bio' => $bio,
         ]);

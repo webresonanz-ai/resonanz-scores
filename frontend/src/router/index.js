@@ -24,6 +24,11 @@ const router = createRouter({
       name: "profile",
       component: () => import("../views/ProfileView.vue"),
     },
+    {
+      path: "/admin/composer-verification",
+      name: "composer-verification",
+      component: () => import("../views/AdminComposerVerificationView.vue"),
+    },
   ],
 });
 

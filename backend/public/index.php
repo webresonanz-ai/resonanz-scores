@@ -23,22 +23,27 @@ spl_autoload_register(function (string $class): void {
 use App\Config\Config;
 use App\Controllers\AuthController;
 use App\Controllers\ComposerController;
+use App\Controllers\ComposerRequestController;
 use App\Controllers\HealthController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ScoreController;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Router;
+use App\Middleware\AdminMiddleware;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CorsMiddleware;
 use App\Services\JwtService;
+use App\Services\MailService;
 
 Config::load(BASE_PATH . '/.env');
 Config::load(BASE_PATH . '/.env.example', false);
 
 $database = new Database();
 $jwtService = new JwtService();
+$mailService = new MailService();
 $authMiddleware = new AuthMiddleware($jwtService);
+$adminMiddleware = new AdminMiddleware($database);
 $corsMiddleware = new CorsMiddleware();
 
 $router = new Router($corsMiddleware);
@@ -47,6 +52,7 @@ $healthController = new HealthController();
 $authController = new AuthController($database, $jwtService);
 $scoreController = new ScoreController($database);
 $composerController = new ComposerController($database);
+$composerRequestController = new ComposerRequestController($database, $mailService);
 $purchaseController = new PurchaseController($database);
 
 $router->get('/api/health', [$healthController, 'index']);
@@ -55,6 +61,11 @@ $router->post('/api/auth/login', [$authController, 'login']);
 $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);
 $router->get('/api/scores', [$scoreController, 'index']);
 $router->get('/api/composers', [$composerController, 'index']);
+$router->get('/api/composer-requests/me', [$composerRequestController, 'mine'], [$authMiddleware]);
+$router->post('/api/composer-requests', [$composerRequestController, 'submit'], [$authMiddleware]);
+$router->get('/api/admin/composer-requests', [$composerRequestController, 'index'], [$authMiddleware, $adminMiddleware]);
+$router->post('/api/admin/composer-requests/approve', [$composerRequestController, 'approve'], [$authMiddleware, $adminMiddleware]);
+$router->post('/api/admin/composer-requests/decline', [$composerRequestController, 'decline'], [$authMiddleware, $adminMiddleware]);
 $router->get('/api/purchases', [$purchaseController, 'index'], [$authMiddleware]);
 
 $router->dispatch(Request::capture());

@@ -90,6 +90,10 @@
               <span class="text-muted">{{ authStore.user?.location || "Not set yet" }}</span>
             </li>
             <li class="mb-3">
+              <i class="bi bi-person-badge text-gold me-2"></i>
+              <span class="text-muted text-capitalize">{{ authStore.user?.role || "customer" }}</span>
+            </li>
+            <li class="mb-3">
               <i class="bi bi-calendar text-gold me-2"></i>
               <span class="text-muted">Member since {{ memberSince }}</span>
             </li>
@@ -97,6 +101,19 @@
           <button class="btn btn-outline-gold w-100" @click="authStore.logout()">
             <i class="bi bi-box-arrow-right me-1"></i> Logout
           </button>
+          <button
+            v-if="showComposerRequestButton"
+            class="btn btn-outline-light w-100 mt-3"
+            :disabled="requestStore.submitting"
+            @click="submitComposerRequest"
+          >
+            {{ requestStore.submitting ? "Submitting request..." : "Request to Become Composer" }}
+          </button>
+          <div v-if="composerRequestLabel" class="request-status mt-3">
+            <span class="small text-uppercase text-gold d-block mb-1">Composer Request Status</span>
+            <span class="text-muted">{{ composerRequestLabel }}</span>
+          </div>
+          <p v-if="requestStore.error" class="text-danger small mt-3 mb-0">{{ requestStore.error }}</p>
         </div>
       </div>
 
@@ -132,10 +149,12 @@
 </template>
 
 <script setup>
-import { computed, reactive } from "vue";
+import { computed, onMounted, reactive, watch } from "vue";
 import { useAuthStore } from "../stores/authStore";
+import { useComposerRequestStore } from "../stores/composerRequestStore";
 
 const authStore = useAuthStore();
+const requestStore = useComposerRequestStore();
 
 const loginForm = reactive({
   email: "john.doe@email.com",
@@ -156,6 +175,48 @@ const memberSince = computed(() => {
 
   return new Date(authStore.user.created_at).getFullYear();
 });
+
+const showComposerRequestButton = computed(() => {
+  return authStore.isAuthenticated && authStore.user?.role === "customer" && requestStore.myRequest?.status !== "pending";
+});
+
+const composerRequestLabel = computed(() => {
+  if (authStore.user?.role === "composer") {
+    return "Approved. Your account is now a composer account.";
+  }
+
+  if (!requestStore.myRequest) {
+    return "";
+  }
+
+  if (requestStore.myRequest.status === "pending") {
+    return "Pending admin review.";
+  }
+
+  if (requestStore.myRequest.status === "approved") {
+    return "Approved. Please refresh if your role has not updated yet.";
+  }
+
+  return "Declined. You can submit a new request anytime.";
+});
+
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    requestStore.fetchMyRequest(authStore.token);
+  }
+});
+
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      requestStore.fetchMyRequest(authStore.token);
+      return;
+    }
+
+    requestStore.reset();
+  },
+);
 
 function formatDate(value) {
   return new Date(value).toLocaleDateString("en-US", {
@@ -184,6 +245,14 @@ async function submitRegister() {
     return error;
   }
 }
+
+async function submitComposerRequest() {
+  try {
+    await requestStore.submitRequest(authStore.token);
+  } catch (error) {
+    return error;
+  }
+}
 </script>
 
 <style scoped>
@@ -197,5 +266,10 @@ async function submitRegister() {
   border: 3px solid rgba(214, 178, 94, 0.78);
   object-fit: cover;
   box-shadow: 0 18px 32px rgba(0, 0, 0, 0.24);
+}
+
+.request-status {
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(214, 178, 94, 0.2);
 }
 </style>

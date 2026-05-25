@@ -38,6 +38,11 @@
               {{ authStore.isAuthenticated ? "My Profile" : "Login" }}
             </router-link>
           </li>
+          <li v-if="authStore.isAdmin" class="nav-item">
+            <router-link class="nav-link" to="/admin/composer-verification" active-class="active">
+              <i class="bi bi-shield-lock me-1"></i> Verify Composers
+            </router-link>
+          </li>
           <li v-if="authStore.isAuthenticated" class="nav-item">
             <button class="btn btn-link nav-link" type="button" @click="authStore.logout()">
               <i class="bi bi-box-arrow-right me-1"></i> Logout

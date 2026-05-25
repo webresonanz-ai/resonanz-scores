@@ -6,21 +6,41 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
+  role ENUM('customer', 'composer', 'admin') NOT NULL DEFAULT 'customer',
   location VARCHAR(120) DEFAULT '',
   bio VARCHAR(255) DEFAULT 'Music Enthusiast',
   avatar VARCHAR(255) DEFAULT 'https://picsum.photos/150/150?random=100',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS role ENUM('customer', 'composer', 'admin') NOT NULL DEFAULT 'customer' AFTER password;
+
 CREATE TABLE IF NOT EXISTS composers (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NULL UNIQUE,
   name VARCHAR(150) NOT NULL,
   period VARCHAR(80) NOT NULL,
   nationality VARCHAR(80) NOT NULL,
   image VARCHAR(255) NOT NULL,
   works INT UNSIGNED NOT NULL DEFAULT 0,
   biography TEXT NOT NULL,
-  featured_work VARCHAR(150) NOT NULL
+  featured_work VARCHAR(150) NOT NULL,
+  CONSTRAINT fk_composers_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+ALTER TABLE composers
+  ADD COLUMN IF NOT EXISTS user_id INT UNSIGNED NULL AFTER id;
+
+CREATE TABLE IF NOT EXISTS composer_requests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  status ENUM('pending', 'approved', 'declined') NOT NULL DEFAULT 'pending',
+  admin_id INT UNSIGNED NULL,
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TIMESTAMP NULL DEFAULT NULL,
+  CONSTRAINT fk_composer_requests_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_composer_requests_admin FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS scores (
@@ -65,8 +85,9 @@ INSERT INTO scores (id, title, composer, genre, difficulty, price, image, descri
   (6, 'Rhapsody in Blue', 'George Gershwin', 'Jazz/Classical', 'Advanced', 24.99, 'https://picsum.photos/400/300?random=6', 'Iconic fusion of classical music with jazz elements.', 35, 4.9)
 ON DUPLICATE KEY UPDATE title = VALUES(title);
 
-INSERT INTO users (id, name, email, password, location, bio, avatar) VALUES
-  (1, 'John Doe', 'john.doe@email.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'New York, USA', 'Music Enthusiast', 'https://picsum.photos/150/150?random=100')
+INSERT INTO users (id, name, email, password, role, location, bio, avatar) VALUES
+  (1, 'John Doe', 'john.doe@email.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'customer', 'New York, USA', 'Music Enthusiast', 'https://picsum.photos/150/150?random=100'),
+  (2, 'Admin User', 'admin@theresonanz.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'admin', 'Jakarta, Indonesia', 'Platform Administrator', 'https://picsum.photos/150/150?random=101')
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
 INSERT INTO purchases (id, user_id, score_id, price, purchase_date) VALUES

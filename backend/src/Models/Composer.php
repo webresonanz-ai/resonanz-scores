@@ -26,4 +26,35 @@ final class Composer
 
         return $statement->fetchAll();
     }
+
+    public function createOrSyncApprovedComposer(int $userId, string $name): void
+    {
+        $statement = $this->db->prepare('SELECT id FROM composers WHERE user_id = :user_id LIMIT 1');
+        $statement->execute(['user_id' => $userId]);
+        $existingId = $statement->fetchColumn();
+
+        if ($existingId !== false) {
+            $update = $this->db->prepare('UPDATE composers SET name = :name WHERE id = :id');
+            $update->execute([
+                'id' => $existingId,
+                'name' => $name,
+            ]);
+            return;
+        }
+
+        $insert = $this->db->prepare(
+            'INSERT INTO composers (user_id, name, period, nationality, image, works, biography, featured_work)
+             VALUES (:user_id, :name, :period, :nationality, :image, :works, :biography, :featured_work)'
+        );
+        $insert->execute([
+            'user_id' => $userId,
+            'name' => $name,
+            'period' => 'To be updated',
+            'nationality' => 'To be updated',
+            'image' => 'https://picsum.photos/400/300?random=200',
+            'works' => 0,
+            'biography' => 'Composer profile is being prepared.',
+            'featured_work' => 'To be updated',
+        ]);
+    }
 }

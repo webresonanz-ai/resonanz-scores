@@ -37,12 +37,21 @@ final class User
     public function create(array $data): int
     {
         $statement = $this->db->prepare(
-            'INSERT INTO users (name, email, password, location, bio) VALUES (:name, :email, :password, :location, :bio)'
+            'INSERT INTO users (name, email, password, role, location, bio) VALUES (:name, :email, :password, :role, :location, :bio)'
         );
 
         $statement->execute($data);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    public function updateRole(int $userId, string $role): void
+    {
+        $statement = $this->db->prepare('UPDATE users SET role = :role WHERE id = :id');
+        $statement->execute([
+            'id' => $userId,
+            'role' => $role,
+        ]);
     }
 
     public function sanitize(?array $user): ?array
