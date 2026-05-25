@@ -38,10 +38,29 @@
               {{ authStore.isAuthenticated ? "My Profile" : "Login" }}
             </router-link>
           </li>
-          <li v-if="authStore.isComposer" class="nav-item">
-            <router-link class="nav-link" to="/composer/dashboard" active-class="active">
+          <li v-if="authStore.isComposer" class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              :class="{ active: isComposerRoute }"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
               <i class="bi bi-journal-music me-1"></i> Composer Dashboard
-            </router-link>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end composer-dropdown">
+              <li>
+                <router-link class="dropdown-item" to="/composer/profile">
+                  Composer Profile
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" to="/composer/dashboard">
+                  Composer Workspace
+                </router-link>
+              </li>
+            </ul>
           </li>
           <li v-if="authStore.isAdmin" class="nav-item">
             <router-link class="nav-link" to="/admin/composer-verification" active-class="active">
@@ -65,9 +84,14 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
 
 const authStore = useAuthStore();
+const route = useRoute();
+
+const isComposerRoute = computed(() => route.path.startsWith("/composer/"));
 </script>
 
 <style scoped>
@@ -116,6 +140,26 @@ const authStore = useAuthStore();
 
 .nav-cta {
   padding-inline: 1rem;
+}
+
+.composer-dropdown {
+  min-width: 14rem;
+  border-radius: 18px;
+  border: 1px solid rgba(214, 178, 94, 0.2);
+  background: rgba(10, 15, 24, 0.96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.dropdown-item {
+  color: var(--text-soft);
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+}
+
+.dropdown-item:hover,
+.dropdown-item.router-link-active {
+  color: var(--gold-soft);
+  background: rgba(214, 178, 94, 0.08);
 }
 
 @media (max-width: 991.98px) {

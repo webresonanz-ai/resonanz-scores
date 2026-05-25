@@ -54,6 +54,15 @@ final class User
         ]);
     }
 
+    public function updateName(int $userId, string $name): void
+    {
+        $statement = $this->db->prepare('UPDATE users SET name = :name WHERE id = :id');
+        $statement->execute([
+            'id' => $userId,
+            'name' => $name,
+        ]);
+    }
+
     public function sanitize(?array $user): ?array
     {
         if ($user === null) {

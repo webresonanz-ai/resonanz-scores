@@ -27,6 +27,28 @@ final class Composer
         return $statement->fetchAll();
     }
 
+    public function findByUserId(int $userId): ?array
+    {
+        $statement = $this->db->prepare(
+            'SELECT id,
+                    user_id AS userId,
+                    name,
+                    period,
+                    nationality,
+                    image,
+                    works,
+                    biography,
+                    featured_work AS featuredWork
+             FROM composers
+             WHERE user_id = :user_id
+             LIMIT 1'
+        );
+        $statement->execute(['user_id' => $userId]);
+        $composer = $statement->fetch();
+
+        return $composer ?: null;
+    }
+
     public function createOrSyncApprovedComposer(int $userId, string $name): void
     {
         $statement = $this->db->prepare('SELECT id FROM composers WHERE user_id = :user_id LIMIT 1');
@@ -55,6 +77,29 @@ final class Composer
             'works' => 0,
             'biography' => 'Composer profile is being prepared.',
             'featured_work' => 'To be updated',
+        ]);
+    }
+
+    public function updateProfile(int $userId, array $payload): void
+    {
+        $statement = $this->db->prepare(
+            'UPDATE composers
+             SET name = :name,
+                 period = :period,
+                 nationality = :nationality,
+                 image = :image,
+                 biography = :biography,
+                 featured_work = :featured_work
+             WHERE user_id = :user_id'
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'name' => $payload['name'],
+            'period' => $payload['period'],
+            'nationality' => $payload['nationality'],
+            'image' => $payload['image'],
+            'biography' => $payload['biography'],
+            'featured_work' => $payload['featured_work'],
         ]);
     }
 }

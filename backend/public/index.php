@@ -23,6 +23,7 @@ spl_autoload_register(function (string $class): void {
 use App\Config\Config;
 use App\Controllers\AuthController;
 use App\Controllers\ComposerController;
+use App\Controllers\ComposerProfileController;
 use App\Controllers\ComposerRequestController;
 use App\Controllers\HealthController;
 use App\Controllers\PurchaseController;
@@ -52,6 +53,7 @@ $healthController = new HealthController();
 $authController = new AuthController($database, $jwtService);
 $scoreController = new ScoreController($database);
 $composerController = new ComposerController($database);
+$composerProfileController = new ComposerProfileController($database);
 $composerRequestController = new ComposerRequestController($database, $mailService);
 $purchaseController = new PurchaseController($database);
 
@@ -63,6 +65,8 @@ $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);
 $router->get('/api/scores', [$scoreController, 'index']);
 $router->get('/api/composer/scores', [$scoreController, 'mine'], [$authMiddleware]);
 $router->post('/api/composer/scores', [$scoreController, 'store'], [$authMiddleware]);
+$router->get('/api/composer/profile', [$composerProfileController, 'show'], [$authMiddleware]);
+$router->post('/api/composer/profile', [$composerProfileController, 'update'], [$authMiddleware]);
 $router->get('/api/composers', [$composerController, 'index']);
 $router->get('/api/composer-requests/me', [$composerRequestController, 'mine'], [$authMiddleware]);
 $router->post('/api/composer-requests', [$composerRequestController, 'submit'], [$authMiddleware]);
