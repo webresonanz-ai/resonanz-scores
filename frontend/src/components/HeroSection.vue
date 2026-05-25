@@ -1,37 +1,79 @@
 <template>
   <section class="hero-section">
-    <div class="container text-center">
+    <div class="container">
       <div class="musical-notes">
         <i class="bi bi-music-note note-1"></i>
         <i class="bi bi-music-note-beamed note-2"></i>
         <i class="bi bi-music-note note-3"></i>
       </div>
-      <h1 class="hero-title mb-3">The Resonanz</h1>
-      <p class="hero-subtitle mb-4">Where Masterpieces Come Alive</p>
-      <p class="lead mb-5" style="color: #aaa">
-        Discover premium sheet music from the world's greatest composers
-      </p>
-      <router-link to="/scores" class="btn bg-gold btn-lg px-5 py-3">
-        <i class="bi bi-collection-play me-2"></i>Explore Scores
-      </router-link>
-      <div class="mt-5">
-        <div class="row justify-content-center">
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-gold">1000+</h3>
-              <small class="text-muted">Sheet Music</small>
+      <div class="hero-panel">
+        <div class="row align-items-center g-5">
+          <div class="col-xl-7">
+            <span class="section-eyebrow">
+              <i class="bi bi-vinyl-fill"></i>
+              Curated Classical Library
+            </span>
+            <h1 class="hero-title">
+              The
+              <span class="hero-accent">Resonanz</span>
+            </h1>
+            <p class="hero-subtitle">Where masterworks feel collected, not crowded</p>
+            <p class="hero-description">
+              Explore premium sheet music with a gallery-like browsing experience, richer detail,
+              and polished presentation that helps every title, image, and composer story stay
+              easy to read.
+            </p>
+            <div class="hero-highlights">
+              <span class="hero-pill">
+                <i class="bi bi-stars text-gold"></i>
+                Handpicked editions
+              </span>
+              <span class="hero-pill">
+                <i class="bi bi-headphones text-gold"></i>
+                Performer-friendly discovery
+              </span>
+              <span class="hero-pill">
+                <i class="bi bi-shield-check text-gold"></i>
+                Clear, elegant catalog design
+              </span>
+            </div>
+            <div class="hero-actions d-flex flex-wrap gap-3 mt-4">
+              <router-link to="/scores" class="btn bg-gold btn-lg px-4 py-3">
+                <i class="bi bi-collection-play me-2"></i>Explore Scores
+              </router-link>
+              <router-link to="/composers" class="btn btn-outline-gold btn-lg px-4 py-3">
+                <i class="bi bi-people me-2"></i>Meet the Composers
+              </router-link>
             </div>
           </div>
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-gold">500+</h3>
-              <small class="text-muted">Composers</small>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-gold">50k+</h3>
-              <small class="text-muted">Musicians</small>
+          <div class="col-xl-5">
+            <div class="hero-stats">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <div class="stat-item">
+                    <h3>1000+</h3>
+                    <small>Sheet music selections</small>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="stat-item">
+                    <h3>500+</h3>
+                    <small>Composers represented</small>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="stat-item">
+                    <h3>50k+</h3>
+                    <small>Musicians inspired</small>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="stat-item">
+                    <h3>4.9/5</h3>
+                    <small>Average collector rating</small>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -57,8 +99,9 @@
 .note-3 {
   position: absolute;
   font-size: 3rem;
-  color: rgba(201, 168, 76, 0.2);
-  animation: float 6s ease-in-out infinite;
+  color: rgba(214, 178, 94, 0.24);
+  animation: floatDrift 7s ease-in-out infinite;
+  text-shadow: 0 0 18px rgba(214, 178, 94, 0.15);
 }
 
 .note-1 {
@@ -74,25 +117,8 @@
 }
 
 .note-3 {
-  bottom: 30%;
-  left: 50%;
+  bottom: 22%;
+  left: 52%;
   animation-delay: 4s;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(10deg);
-  }
-}
-
-.stat-item {
-  padding: 1rem;
-  border: 1px solid rgba(201, 168, 76, 0.3);
-  border-radius: 10px;
-  background: rgba(201, 168, 76, 0.05);
 }
 </style>

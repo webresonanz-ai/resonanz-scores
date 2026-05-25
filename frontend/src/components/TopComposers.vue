@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div v-for="composer in topComposers" :key="composer.id" class="col-md-2 col-6 mb-4">
+    <div v-for="composer in topComposers" :key="composer.id" class="col-xl-2 col-lg-4 col-md-4 col-6 mb-4">
       <ComposerCard :composer="composer" />
     </div>
   </div>

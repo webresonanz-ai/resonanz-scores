@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div v-for="score in featuredScores" :key="score.id" class="col-md-4 mb-4">
+    <div v-for="score in featuredScores" :key="score.id" class="col-lg-4 col-md-6 mb-4">
       <ScoreCard :score="score" />
     </div>
   </div>

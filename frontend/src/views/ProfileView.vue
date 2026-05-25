@@ -1,16 +1,17 @@
 <template>
-  <div class="container py-5 mt-5">
+  <div class="container page-section py-5 mt-5">
     <div v-if="!authStore.isAuthenticated" class="row g-4">
       <div class="col-lg-6">
-        <div
-          class="p-4 h-100"
-          style="
-            background: linear-gradient(135deg, var(--darker) 0%, var(--accent) 100%);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            border-radius: 15px;
-          "
-        >
-          <h4 class="text-gold mb-4"><i class="bi bi-box-arrow-in-right me-2"></i>Login</h4>
+        <div class="surface-card p-4 p-lg-5 h-100">
+          <span class="section-eyebrow mb-3">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Welcome Back
+          </span>
+          <h4 class="text-gold auth-title mb-3">Login to continue your collection</h4>
+          <p class="text-muted mb-4">
+            A cleaner, higher-contrast form keeps the experience calm and readable while you sign
+            in.
+          </p>
           <form @submit.prevent="submitLogin">
             <div class="mb-3">
               <label class="form-label text-muted">Email</label>
@@ -29,15 +30,16 @@
       </div>
 
       <div class="col-lg-6">
-        <div
-          class="p-4 h-100"
-          style="
-            background: linear-gradient(135deg, var(--darker) 0%, var(--accent) 100%);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            border-radius: 15px;
-          "
-        >
-          <h4 class="text-gold mb-4"><i class="bi bi-person-plus me-2"></i>Create Account</h4>
+        <div class="surface-card p-4 p-lg-5 h-100">
+          <span class="section-eyebrow mb-3">
+            <i class="bi bi-person-plus"></i>
+            New Member
+          </span>
+          <h4 class="text-gold auth-title mb-3">Create an account with a polished first impression</h4>
+          <p class="text-muted mb-4">
+            Clear input styling and more breathing room help the form feel professional instead of
+            dense.
+          </p>
           <form @submit.prevent="submitRegister">
             <div class="mb-3">
               <label class="form-label text-muted">Name</label>
@@ -65,21 +67,13 @@
 
     <div v-else class="row">
       <div class="col-lg-4">
-        <div
-          class="profile-sidebar p-4"
-          style="
-            background: linear-gradient(135deg, var(--darker) 0%, var(--accent) 100%);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            border-radius: 15px;
-          "
-        >
+        <div class="profile-sidebar surface-card p-4">
           <div class="text-center mb-4">
             <img
               :src="authStore.user?.avatar || 'https://picsum.photos/150/150?random=100'"
-              class="rounded-circle mb-3"
+              class="rounded-circle profile-avatar mb-3"
               width="120"
               height="120"
-              style="border: 3px solid var(--gold); object-fit: cover"
               alt="Profile"
             />
             <h4 class="text-gold">{{ authStore.user?.name }}</h4>
@@ -107,21 +101,17 @@
       </div>
 
       <div class="col-lg-8">
-        <div
-          class="p-4"
-          style="
-            background: linear-gradient(135deg, var(--darker) 0%, var(--accent) 100%);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            border-radius: 15px;
-          "
-        >
-          <h4 class="text-gold mb-4"><i class="bi bi-clock-history me-2"></i>Purchase History</h4>
+        <div class="surface-card p-4 p-lg-5">
+          <span class="section-eyebrow mb-3">
+            <i class="bi bi-clock-history"></i>
+            Account Activity
+          </span>
+          <h4 class="text-gold auth-title mb-4">Purchase history</h4>
 
           <div
             v-for="purchase in authStore.purchases"
             :key="purchase.id"
-            class="purchase-item mb-3 p-3"
-            style="background: rgba(201, 168, 76, 0.05); border-radius: 10px"
+            class="purchase-item detail-list-item mb-3"
           >
             <div class="d-flex justify-content-between align-items-center">
               <div>
@@ -195,3 +185,17 @@ async function submitRegister() {
   }
 }
 </script>
+
+<style scoped>
+.auth-title {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: 2.2rem;
+}
+
+.profile-avatar {
+  margin-inline: auto;
+  border: 3px solid rgba(214, 178, 94, 0.78);
+  object-fit: cover;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.24);
+}
+</style>

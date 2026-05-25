@@ -1,58 +1,59 @@
 <template>
-  <div class="container py-5 mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="section-title text-gold mb-0">
-        <i class="bi bi-file-earmark-music me-2"></i>Sheet Music Collection
-      </h2>
-      <ViewToggle />
-    </div>
-
-    <!-- Grid View -->
-    <div v-if="scoreStore.viewMode === 'grid'" class="row">
-      <div v-for="score in scoreStore.scores" :key="score.id" class="col-md-4 mb-4">
-        <ScoreCard :score="score" />
+  <div class="container page-section py-5 mt-5">
+    <section class="section-shell">
+      <div class="section-heading">
+        <div class="section-heading-copy">
+          <span class="section-eyebrow">
+            <i class="bi bi-file-earmark-music-fill"></i>
+            Catalog
+          </span>
+          <h2 class="section-title text-gold">Sheet music collection designed for confident browsing</h2>
+          <p class="section-description">
+            Each card now emphasizes title, composer, difficulty, and price with clearer spacing
+            and higher contrast so the catalog feels more premium and easier to scan.
+          </p>
+        </div>
+        <ViewToggle />
       </div>
-    </div>
 
-    <!-- List View -->
-    <div v-else>
+      <div v-if="scoreStore.viewMode === 'grid'" class="row">
+        <div v-for="score in scoreStore.scores" :key="score.id" class="col-xl-4 col-md-6 mb-4">
+          <ScoreCard :score="score" />
+        </div>
+      </div>
+
       <div
+        v-else
         v-for="score in scoreStore.scores"
         :key="score.id"
-        class="score-list-item mb-3 p-3"
-        style="
-          background: linear-gradient(135deg, var(--darker) 0%, var(--accent) 100%);
-          border: 1px solid rgba(201, 168, 76, 0.3);
-          border-radius: 10px;
-        "
+        class="detail-list-item mb-3"
       >
         <div class="row align-items-center">
-          <div class="col-md-2">
+          <div class="col-md-2 mb-3 mb-md-0">
             <img
               :src="score.image"
-              class="img-fluid rounded"
-              style="height: 100px; width: 100%; object-fit: cover"
+              class="img-fluid rounded-4 score-list-image"
               :alt="score.title"
             />
           </div>
-          <div class="col-md-4">
-            <h5 class="text-gold mb-1">{{ score.title }}</h5>
+          <div class="col-md-4 mb-3 mb-md-0">
+            <h5 class="text-gold mb-1 list-title">{{ score.title }}</h5>
             <p class="text-muted mb-0"><i class="bi bi-person me-1"></i>{{ score.composer }}</p>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 mb-3 mb-md-0">
             <span class="difficulty-badge">{{ score.difficulty }}</span>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 mb-3 mb-md-0">
             <span class="price-tag">${{ score.price }}</span>
           </div>
           <div class="col-md-2 text-end">
-            <button class="btn btn-outline-gold btn-sm">
+            <button class="btn btn-outline-gold btn-sm px-3 py-2">
               <i class="bi bi-cart-plus me-1"></i> Add to Cart
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -70,3 +71,16 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.score-list-image {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
+
+.list-title {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: 1.65rem;
+}
+</style>

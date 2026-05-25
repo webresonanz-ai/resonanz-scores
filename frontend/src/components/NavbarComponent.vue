@@ -1,9 +1,11 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
     <div class="container">
-      <router-link class="navbar-brand" to="/">
-        <i class="bi bi-music-note-beamed me-2"></i>
-        The Resonanz
+      <router-link class="navbar-brand d-flex align-items-center gap-2" to="/">
+        <span class="brand-mark">
+          <i class="bi bi-music-note-beamed"></i>
+        </span>
+        <span>The Resonanz</span>
       </router-link>
       <button
         class="navbar-toggler"
@@ -42,7 +44,7 @@
             </button>
           </li>
           <li class="nav-item ms-lg-3">
-            <button class="btn btn-outline-gold btn-sm">
+            <button class="btn btn-outline-gold btn-sm nav-cta">
               <i class="bi bi-cart3 me-1"></i> Cart (0)
             </button>
           </li>
@@ -59,22 +61,36 @@ const authStore = useAuthStore();
 </script>
 
 <style scoped>
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  background: rgba(214, 178, 94, 0.12);
+  border: 1px solid rgba(214, 178, 94, 0.18);
+  color: var(--gold-soft);
+  font-size: 1rem;
+}
+
 .nav-link {
   position: relative;
-  color: var(--light) !important;
+  color: var(--text-soft) !important;
+  font-weight: 600;
   transition: all 0.3s ease;
   margin: 0 0.5rem;
 }
 
 .nav-link:hover,
 .nav-link.active {
-  color: var(--gold) !important;
+  color: var(--gold-soft) !important;
 }
 
 .nav-link::after {
   content: "";
   position: absolute;
-  bottom: 0;
+  bottom: -0.2rem;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
@@ -86,5 +102,15 @@ const authStore = useAuthStore();
 .nav-link:hover::after,
 .nav-link.active::after {
   width: 100%;
+}
+
+.nav-cta {
+  padding-inline: 1rem;
+}
+
+@media (max-width: 991.98px) {
+  .nav-link {
+    margin: 0.35rem 0;
+  }
 }
 </style>

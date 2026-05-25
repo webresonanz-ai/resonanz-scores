@@ -1,7 +1,11 @@
 <template>
-  <div id="app">
+  <div id="app" class="app-shell">
     <NavbarComponent />
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <transition name="page-transition" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
     <FooterComponent />
   </div>
 </template>

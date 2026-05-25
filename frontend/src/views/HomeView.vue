@@ -1,22 +1,40 @@
 <template>
-  <div>
-    <!-- Hero Section -->
+  <div class="page-section">
     <HeroSection />
-
-    <!-- Featured Scores -->
     <div class="container py-5">
-      <h2 class="section-title text-gold mb-4">
-        <i class="bi bi-star-fill me-2"></i>Featured Sheet Music
-      </h2>
-      <FeaturedScores />
-    </div>
+      <section class="section-shell mb-5">
+        <div class="section-heading">
+          <div class="section-heading-copy">
+            <span class="section-eyebrow">
+              <i class="bi bi-star-fill"></i>
+              Signature Selection
+            </span>
+            <h2 class="section-title text-gold">Featured sheet music with gallery-level presence</h2>
+            <p class="section-description">
+              Richer cards, calmer spacing, and cleaner hierarchy help visitors focus on the work,
+              the composer, and the purchase decision without visual clutter.
+            </p>
+          </div>
+        </div>
+        <FeaturedScores />
+      </section>
 
-    <!-- Top Composers -->
-    <div class="container py-5">
-      <h2 class="section-title text-gold mb-4">
-        <i class="bi bi-trophy-fill me-2"></i>Top Composers
-      </h2>
-      <TopComposers />
+      <section class="section-shell">
+        <div class="section-heading">
+          <div class="section-heading-copy">
+            <span class="section-eyebrow">
+              <i class="bi bi-trophy-fill"></i>
+              Editorial Spotlight
+            </span>
+            <h2 class="section-title text-gold">Top composers, framed like a curated collection</h2>
+            <p class="section-description">
+              More balanced contrast and tighter presentation make biographies, eras, and works
+              easier to scan on every screen size.
+            </p>
+          </div>
+        </div>
+        <TopComposers />
+      </section>
     </div>
   </div>
 </template>
