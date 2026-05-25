@@ -41,7 +41,14 @@
 </template>
 
 <script setup>
+import { onMounted } from "vue";
 import { useComposerStore } from "../stores/composerStore";
 
 const composerStore = useComposerStore();
+
+onMounted(() => {
+  if (!composerStore.composers.length) {
+    composerStore.fetchComposers();
+  }
+});
 </script>

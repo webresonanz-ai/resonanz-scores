@@ -14,7 +14,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
           <li class="nav-item">
             <router-link class="nav-link" to="/" exact-active-class="active">
               <i class="bi bi-house-door me-1"></i> Home
@@ -32,10 +32,16 @@
           </li>
           <li class="nav-item">
             <router-link class="nav-link" to="/profile" active-class="active">
-              <i class="bi bi-person-circle me-1"></i> Profile
+              <i class="bi bi-person-circle me-1"></i>
+              {{ authStore.isAuthenticated ? "My Profile" : "Login" }}
             </router-link>
           </li>
-          <li class="nav-item ms-3">
+          <li v-if="authStore.isAuthenticated" class="nav-item">
+            <button class="btn btn-link nav-link" type="button" @click="authStore.logout()">
+              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </button>
+          </li>
+          <li class="nav-item ms-lg-3">
             <button class="btn btn-outline-gold btn-sm">
               <i class="bi bi-cart3 me-1"></i> Cart (0)
             </button>
@@ -46,7 +52,11 @@
   </nav>
 </template>
 
-<script setup></script>
+<script setup>
+import { useAuthStore } from "../stores/authStore";
+
+const authStore = useAuthStore();
+</script>
 
 <style scoped>
 .nav-link {

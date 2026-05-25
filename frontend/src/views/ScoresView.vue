@@ -57,9 +57,16 @@
 </template>
 
 <script setup>
+import { onMounted } from "vue";
 import { useScoreStore } from "../stores/scoreStore";
 import ScoreCard from "../components/ScoreCard.vue";
 import ViewToggle from "../components/ViewToggle.vue";
 
 const scoreStore = useScoreStore();
+
+onMounted(() => {
+  if (!scoreStore.scores.length) {
+    scoreStore.fetchScores();
+  }
+});
 </script>
