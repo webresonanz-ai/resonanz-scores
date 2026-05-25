@@ -56,10 +56,13 @@ $composerRequestController = new ComposerRequestController($database, $mailServi
 $purchaseController = new PurchaseController($database);
 
 $router->get('/api/health', [$healthController, 'index']);
+$router->get('/api/score-image', [$scoreController, 'image']);
 $router->post('/api/auth/register', [$authController, 'register']);
 $router->post('/api/auth/login', [$authController, 'login']);
 $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);
 $router->get('/api/scores', [$scoreController, 'index']);
+$router->get('/api/composer/scores', [$scoreController, 'mine'], [$authMiddleware]);
+$router->post('/api/composer/scores', [$scoreController, 'store'], [$authMiddleware]);
 $router->get('/api/composers', [$composerController, 'index']);
 $router->get('/api/composer-requests/me', [$composerRequestController, 'mine'], [$authMiddleware]);
 $router->post('/api/composer-requests', [$composerRequestController, 'submit'], [$authMiddleware]);

@@ -64,6 +64,7 @@ final class AuthController
         $token = $this->jwtService->encode([
             'sub' => $userId,
             'email' => $email,
+            'role' => $user['role'] ?? 'customer',
         ]);
 
         Response::json([
@@ -95,6 +96,7 @@ final class AuthController
         $token = $this->jwtService->encode([
             'sub' => (int) $user['id'],
             'email' => $user['email'],
+            'role' => $user['role'],
         ]);
 
         Response::json([

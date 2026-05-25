@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800" role="img" aria-labelledby="title desc">
+  <title id="title">Default score cover</title>
+  <desc id="desc">Decorative fallback cover for a sheet music composition.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#13233e"/>
+      <stop offset="55%" stop-color="#0b1425"/>
+      <stop offset="100%" stop-color="#050b15"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4dfaa"/>
+      <stop offset="55%" stop-color="#d6b25e"/>
+      <stop offset="100%" stop-color="#b7872f"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="800" fill="url(#bg)"/>
+  <circle cx="125" cy="140" r="110" fill="#d6b25e" opacity="0.08"/>
+  <circle cx="540" cy="640" r="160" fill="#6b8fc4" opacity="0.12"/>
+  <rect x="62" y="58" width="516" height="684" rx="28" fill="none" stroke="url(#gold)" stroke-opacity="0.3" stroke-width="2"/>
+  <path d="M145 622c0-69 56-125 125-125s125 56 125 125c0 54-43 98-97 98-43 0-78-35-78-78 0-34 27-61 61-61 26 0 47 21 47 47 0 20-16 36-36 36" fill="none" stroke="url(#gold)" stroke-width="20" stroke-linecap="round"/>
+  <line x1="270" y1="223" x2="270" y2="612" stroke="url(#gold)" stroke-width="20" stroke-linecap="round"/>
+  <line x1="166" y1="272" x2="423" y2="272" stroke="#f0deb1" stroke-opacity="0.35" stroke-width="4"/>
+  <line x1="166" y1="322" x2="462" y2="322" stroke="#f0deb1" stroke-opacity="0.3" stroke-width="4"/>
+  <line x1="166" y1="372" x2="430" y2="372" stroke="#f0deb1" stroke-opacity="0.24" stroke-width="4"/>
+  <text x="320" y="122" fill="#f0deb1" font-family="Georgia, serif" font-size="34" letter-spacing="8" text-anchor="middle">THE RESONANZ</text>
+  <text x="320" y="706" fill="#d7ddea" font-family="Manrope, Arial, sans-serif" font-size="24" letter-spacing="6" text-anchor="middle">SHEET MUSIC</text>
+</svg>

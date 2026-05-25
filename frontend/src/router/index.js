@@ -25,6 +25,11 @@ const router = createRouter({
       component: () => import("../views/ProfileView.vue"),
     },
     {
+      path: "/composer/dashboard",
+      name: "composer-dashboard",
+      component: () => import("../views/ComposerDashboardView.vue"),
+    },
+    {
       path: "/admin/composer-verification",
       name: "composer-verification",
       component: () => import("../views/AdminComposerVerificationView.vue"),

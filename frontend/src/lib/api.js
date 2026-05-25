@@ -1,9 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
-function buildHeaders(token) {
-  const headers = {
-    "Content-Type": "application/json",
-  };
+function buildHeaders(token, body) {
+  const headers = {};
+
+  if (!(body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -13,10 +15,11 @@ function buildHeaders(token) {
 }
 
 export async function apiRequest(path, options = {}) {
+  const body = options.body instanceof FormData ? options.body : options.body ? JSON.stringify(options.body) : undefined;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method || "GET",
-    headers: buildHeaders(options.token),
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    headers: buildHeaders(options.token, options.body),
+    body,
   });
 
   const data = await response.json().catch(() => ({}));

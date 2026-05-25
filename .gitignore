@@ -39,3 +39,7 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 .env
+backend/stored/pdf/*
+backend/stored/pdf/.gitkeep
+backend/stored/images/*
+backend/stored/images/.gitkeep

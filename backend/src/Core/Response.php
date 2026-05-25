@@ -13,4 +13,13 @@ final class Response
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
+
+    public static function file(string $path, string $contentType): never
+    {
+        http_response_code(200);
+        header('Content-Type: ' . $contentType);
+        header('Content-Length: ' . (string) filesize($path));
+        readfile($path);
+        exit;
+    }
 }

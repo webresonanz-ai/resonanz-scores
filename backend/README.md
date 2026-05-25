@@ -42,6 +42,8 @@ php -S localhost:8000 -t backend/public
 - `POST /api/auth/login`
 - `GET /api/auth/me` (Bearer token required)
 - `GET /api/scores`
+- `GET /api/composer/scores` (Composer token required)
+- `POST /api/composer/scores` (Composer token required, multipart form)
 - `GET /api/composers`
 - `GET /api/composer-requests/me` (Bearer token required)
 - `POST /api/composer-requests` (Bearer token required)
@@ -56,3 +58,8 @@ php -S localhost:8000 -t backend/public
 - Password: `password123`
 - Admin email: `admin@theresonanz.com`
 - Admin password: `password123`
+
+## Upload Storage
+
+- Score PDFs are saved in `backend/stored/pdf`
+- Optional composition cover images are saved in `backend/stored/images`

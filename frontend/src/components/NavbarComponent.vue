@@ -38,6 +38,11 @@
               {{ authStore.isAuthenticated ? "My Profile" : "Login" }}
             </router-link>
           </li>
+          <li v-if="authStore.isComposer" class="nav-item">
+            <router-link class="nav-link" to="/composer/dashboard" active-class="active">
+              <i class="bi bi-journal-music me-1"></i> Composer Dashboard
+            </router-link>
+          </li>
           <li v-if="authStore.isAdmin" class="nav-item">
             <router-link class="nav-link" to="/admin/composer-verification" active-class="active">
               <i class="bi bi-shield-lock me-1"></i> Verify Composers

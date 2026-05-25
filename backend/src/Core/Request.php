@@ -11,6 +11,7 @@ final class Request
         public readonly string $path,
         public readonly array $query,
         public readonly array $body,
+        public readonly array $files,
         public readonly array $headers,
         public array $attributes = [],
     ) {
@@ -19,14 +20,18 @@ final class Request
     public static function capture(): self
     {
         $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+        $isMultipart = str_contains(strtolower($contentType), 'multipart/form-data');
         $rawBody = file_get_contents('php://input');
         $decodedBody = json_decode($rawBody ?: '[]', true);
+        $body = $isMultipart ? $_POST : (is_array($decodedBody) ? $decodedBody : []);
 
         return new self(
             strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'),
             rtrim($uri, '/') ?: '/',
             $_GET,
-            is_array($decodedBody) ? $decodedBody : [],
+            is_array($body) ? $body : [],
+            self::normalizeFiles($_FILES ?? []),
             self::headers(),
         );
     }
@@ -53,6 +58,15 @@ final class Request
         return $this->body[$key] ?? $default;
     }
 
+    public function file(string $key): ?array
+    {
+        $file = $this->files[$key] ?? null;
+
+        return is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE
+            ? $file
+            : null;
+    }
+
     public function setAttribute(string $key, mixed $value): void
     {
         $this->attributes[$key] = $value;
@@ -72,5 +86,20 @@ final class Request
         }
 
         return $headers;
+    }
+
+    private static function normalizeFiles(array $files): array
+    {
+        $normalized = [];
+
+        foreach ($files as $key => $file) {
+            if (!is_array($file) || !array_key_exists('name', $file)) {
+                continue;
+            }
+
+            $normalized[$key] = $file;
+        }
+
+        return $normalized;
     }
 }

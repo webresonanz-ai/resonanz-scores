@@ -45,16 +45,29 @@ CREATE TABLE IF NOT EXISTS composer_requests (
 
 CREATE TABLE IF NOT EXISTS scores (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NULL,
   title VARCHAR(150) NOT NULL,
   composer VARCHAR(150) NOT NULL,
+  arranger VARCHAR(150) NULL,
+  is_arranged TINYINT(1) NOT NULL DEFAULT 0,
   genre VARCHAR(80) NOT NULL,
   difficulty VARCHAR(50) NOT NULL,
   price DECIMAL(10,2) NOT NULL DEFAULT 0,
   image VARCHAR(255) NOT NULL,
+  pdf_path VARCHAR(255) NOT NULL DEFAULT '',
   description TEXT NOT NULL,
   pages INT UNSIGNED NOT NULL DEFAULT 0,
-  rating DECIMAL(2,1) NOT NULL DEFAULT 0
+  rating DECIMAL(2,1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_scores_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
+
+ALTER TABLE scores
+  ADD COLUMN IF NOT EXISTS user_id INT UNSIGNED NULL AFTER id,
+  ADD COLUMN IF NOT EXISTS arranger VARCHAR(150) NULL AFTER composer,
+  ADD COLUMN IF NOT EXISTS is_arranged TINYINT(1) NOT NULL DEFAULT 0 AFTER arranger,
+  ADD COLUMN IF NOT EXISTS pdf_path VARCHAR(255) NOT NULL DEFAULT '' AFTER image,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER rating;
 
 CREATE TABLE IF NOT EXISTS purchases (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -69,20 +82,20 @@ CREATE TABLE IF NOT EXISTS purchases (
 
 INSERT INTO composers (id, name, period, nationality, image, works, biography, featured_work) VALUES
   (1, 'Ludwig van Beethoven', 'Classical/Romantic', 'German', 'https://picsum.photos/400/300?random=10', 138, 'One of the most influential composers in Western classical music.', 'Symphony No. 9'),
-  (2, 'Frédéric Chopin', 'Romantic', 'Polish', 'https://picsum.photos/400/300?random=11', 230, 'Poet of the piano who transformed expressive keyboard writing.', 'Nocturnes'),
-  (3, 'Claude Debussy', 'Impressionist', 'French', 'https://picsum.photos/400/300?random=12', 141, 'Pioneer of Impressionist music with a distinctive harmonic language.', 'Prélude à l''après-midi d''un faune'),
+  (2, 'Frederic Chopin', 'Romantic', 'Polish', 'https://picsum.photos/400/300?random=11', 230, 'Poet of the piano who transformed expressive keyboard writing.', 'Nocturnes'),
+  (3, 'Claude Debussy', 'Impressionist', 'French', 'https://picsum.photos/400/300?random=12', 141, 'Pioneer of Impressionist music with a distinctive harmonic language.', 'Prelude a l''apres-midi d''un faune'),
   (4, 'Johann Sebastian Bach', 'Baroque', 'German', 'https://picsum.photos/400/300?random=13', 1128, 'Master of counterpoint and one of the foundational figures in Western music.', 'Brandenburg Concertos'),
   (5, 'Wolfgang Amadeus Mozart', 'Classical', 'Austrian', 'https://picsum.photos/400/300?random=14', 626, 'A prolific classical composer whose works remain central to the repertoire.', 'The Magic Flute'),
   (6, 'Pyotr Ilyich Tchaikovsky', 'Romantic', 'Russian', 'https://picsum.photos/400/300?random=15', 169, 'The first Russian composer to achieve enduring international fame.', 'Swan Lake')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
-INSERT INTO scores (id, title, composer, genre, difficulty, price, image, description, pages, rating) VALUES
-  (1, 'Moonlight Sonata', 'Ludwig van Beethoven', 'Classical', 'Advanced', 19.99, 'https://picsum.photos/400/300?random=1', 'Complete piano sonata No. 14 in C-sharp minor.', 23, 4.9),
-  (2, 'Clair de Lune', 'Claude Debussy', 'Impressionist', 'Intermediate', 14.99, 'https://picsum.photos/400/300?random=2', 'From Suite Bergamasque, one of the most beloved piano pieces.', 15, 4.8),
-  (3, 'Nocturne in E-flat Major', 'Frédéric Chopin', 'Romantic', 'Advanced', 17.99, 'https://picsum.photos/400/300?random=3', 'Op. 9 No. 2, one of Chopin''s most famous nocturnes.', 12, 4.9),
-  (4, 'The Entertainer', 'Scott Joplin', 'Ragtime', 'Intermediate', 12.99, 'https://picsum.photos/400/300?random=4', 'Classic ragtime piece, perfect for intermediate pianists.', 8, 4.7),
-  (5, 'Canon in D', 'Johann Pachelbel', 'Baroque', 'Beginner', 9.99, 'https://picsum.photos/400/300?random=5', 'Beautiful and accessible arrangement for piano.', 6, 4.6),
-  (6, 'Rhapsody in Blue', 'George Gershwin', 'Jazz/Classical', 'Advanced', 24.99, 'https://picsum.photos/400/300?random=6', 'Iconic fusion of classical music with jazz elements.', 35, 4.9)
+INSERT INTO scores (id, user_id, title, composer, arranger, is_arranged, genre, difficulty, price, image, pdf_path, description, pages, rating) VALUES
+  (1, NULL, 'Moonlight Sonata', 'Ludwig van Beethoven', NULL, 0, 'Classical', 'Advanced', 19.99, 'https://picsum.photos/400/300?random=1', '', 'Complete piano sonata No. 14 in C-sharp minor.', 23, 4.9),
+  (2, NULL, 'Clair de Lune', 'Claude Debussy', NULL, 0, 'Impressionist', 'Intermediate', 14.99, 'https://picsum.photos/400/300?random=2', '', 'From Suite Bergamasque, one of the most beloved piano pieces.', 15, 4.8),
+  (3, NULL, 'Nocturne in E-flat Major', 'Frederic Chopin', NULL, 0, 'Romantic', 'Advanced', 17.99, 'https://picsum.photos/400/300?random=3', '', 'Op. 9 No. 2, one of Chopin''s most famous nocturnes.', 12, 4.9),
+  (4, NULL, 'The Entertainer', 'Scott Joplin', NULL, 0, 'Ragtime', 'Intermediate', 12.99, 'https://picsum.photos/400/300?random=4', '', 'Classic ragtime piece, perfect for intermediate pianists.', 8, 4.7),
+  (5, NULL, 'Canon in D', 'Johann Pachelbel', NULL, 0, 'Baroque', 'Beginner', 9.99, 'https://picsum.photos/400/300?random=5', '', 'Beautiful and accessible arrangement for piano.', 6, 4.6),
+  (6, NULL, 'Rhapsody in Blue', 'George Gershwin', NULL, 0, 'Jazz/Classical', 'Advanced', 24.99, 'https://picsum.photos/400/300?random=6', '', 'Iconic fusion of classical music with jazz elements.', 35, 4.9)
 ON DUPLICATE KEY UPDATE title = VALUES(title);
 
 INSERT INTO users (id, name, email, password, role, location, bio, avatar) VALUES
