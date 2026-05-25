@@ -47,9 +47,12 @@
             <span class="price-tag">${{ score.price }}</span>
           </div>
           <div class="col-md-2 text-end">
-            <button class="btn btn-outline-gold btn-sm px-3 py-2">
-              <i class="bi bi-cart-plus me-1"></i> Add to Cart
-            </button>
+            <RouterLink
+              :to="{ name: 'score-detail', params: { id: score.id } }"
+              class="btn btn-outline-gold btn-sm px-3 py-2"
+            >
+              <i class="bi bi-eye me-1"></i> View Score
+            </RouterLink>
           </div>
         </div>
       </div>
@@ -59,6 +62,7 @@
 
 <script setup>
 import { onMounted } from "vue";
+import { RouterLink } from "vue-router";
 import { useScoreStore } from "../stores/scoreStore";
 import ScoreCard from "../components/ScoreCard.vue";
 import ViewToggle from "../components/ViewToggle.vue";

@@ -8,6 +8,7 @@ export const useAuthStore = defineStore("auth", () => {
   const token = ref(localStorage.getItem(TOKEN_KEY) || "");
   const user = ref(null);
   const purchases = ref([]);
+  const orders = ref([]);
   const loading = ref(false);
   const error = ref("");
 
@@ -30,6 +31,7 @@ export const useAuthStore = defineStore("auth", () => {
     if (!token.value) {
       user.value = null;
       purchases.value = [];
+      orders.value = [];
       return;
     }
 
@@ -43,13 +45,18 @@ export const useAuthStore = defineStore("auth", () => {
       const purchaseResponse = await apiRequest("/purchases", {
         token: token.value,
       });
+      const orderResponse = await apiRequest("/orders", {
+        token: token.value,
+      });
 
       user.value = profileResponse.user;
       purchases.value = purchaseResponse.data;
+      orders.value = orderResponse.data;
     } catch (fetchError) {
       persistToken("");
       user.value = null;
       purchases.value = [];
+      orders.value = [];
       error.value = fetchError.message;
     } finally {
       loading.value = false;
@@ -90,6 +97,7 @@ export const useAuthStore = defineStore("auth", () => {
       persistToken(response.token);
       user.value = response.user;
       purchases.value = [];
+      orders.value = [];
       await fetchProfile();
     } catch (registerError) {
       error.value = registerError.message;
@@ -103,6 +111,7 @@ export const useAuthStore = defineStore("auth", () => {
     persistToken("");
     user.value = null;
     purchases.value = [];
+    orders.value = [];
     error.value = "";
   }
 
@@ -110,6 +119,7 @@ export const useAuthStore = defineStore("auth", () => {
     token,
     user,
     purchases,
+    orders,
     loading,
     error,
     isAuthenticated,

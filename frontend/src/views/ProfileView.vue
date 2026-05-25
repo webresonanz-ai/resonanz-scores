@@ -123,7 +123,36 @@
             <i class="bi bi-clock-history"></i>
             Account Activity
           </span>
-          <h4 class="text-gold auth-title mb-4">Purchase history</h4>
+          <h4 class="text-gold auth-title mb-4">Recent orders</h4>
+
+          <div
+            v-for="order in authStore.orders"
+            :key="`order-${order.id}`"
+            class="purchase-item detail-list-item mb-3"
+          >
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+              <div>
+                <h6 class="text-gold mb-1">Order #{{ order.id }}</h6>
+                <p class="text-muted mb-1 small">
+                  {{ order.totalItems }} item(s) • {{ formatDate(order.createdAt) }}
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <span class="difficulty-badge text-uppercase">{{ order.status }}</span>
+                  <span class="meta-chip">
+                    <i class="bi bi-credit-card text-gold"></i>
+                    {{ order.paymentStatus }}
+                  </span>
+                </div>
+              </div>
+              <span class="price-tag">${{ order.totalAmount }}</span>
+            </div>
+          </div>
+
+          <p v-if="!authStore.orders.length" class="text-muted mb-4">
+            No orders yet. Your checkout activity will appear here.
+          </p>
+
+          <h4 class="text-gold auth-title mb-4 mt-5">Purchase history</h4>
 
           <div
             v-for="purchase in authStore.purchases"

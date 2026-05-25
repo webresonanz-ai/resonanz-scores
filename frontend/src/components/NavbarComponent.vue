@@ -73,9 +73,9 @@
             </button>
           </li>
           <li class="nav-item ms-lg-3">
-            <button class="btn btn-outline-gold btn-sm nav-cta">
-              <i class="bi bi-cart3 me-1"></i> Cart (0)
-            </button>
+            <router-link class="btn btn-outline-gold btn-sm nav-cta" to="/cart">
+              <i class="bi bi-cart3 me-1"></i> Cart ({{ cartStore.itemCount }})
+            </router-link>
           </li>
         </ul>
       </div>
@@ -87,8 +87,10 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
+import { useCartStore } from "../stores/cartStore";
 
 const authStore = useAuthStore();
+const cartStore = useCartStore();
 const route = useRoute();
 
 const isComposerRoute = computed(() => route.path.startsWith("/composer/"));

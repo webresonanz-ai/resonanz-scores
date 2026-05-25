@@ -26,6 +26,7 @@ use App\Controllers\ComposerController;
 use App\Controllers\ComposerProfileController;
 use App\Controllers\ComposerRequestController;
 use App\Controllers\HealthController;
+use App\Controllers\OrderController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ScoreController;
 use App\Core\Database;
@@ -56,9 +57,12 @@ $composerController = new ComposerController($database);
 $composerProfileController = new ComposerProfileController($database);
 $composerRequestController = new ComposerRequestController($database, $mailService);
 $purchaseController = new PurchaseController($database);
+$orderController = new OrderController($database);
 
 $router->get('/api/health', [$healthController, 'index']);
+$router->get('/api/score', [$scoreController, 'show']);
 $router->get('/api/score-image', [$scoreController, 'image']);
+$router->get('/api/score-pdf', [$scoreController, 'pdf']);
 $router->post('/api/auth/register', [$authController, 'register']);
 $router->post('/api/auth/login', [$authController, 'login']);
 $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);
@@ -74,5 +78,7 @@ $router->get('/api/admin/composer-requests', [$composerRequestController, 'index
 $router->post('/api/admin/composer-requests/approve', [$composerRequestController, 'approve'], [$authMiddleware, $adminMiddleware]);
 $router->post('/api/admin/composer-requests/decline', [$composerRequestController, 'decline'], [$authMiddleware, $adminMiddleware]);
 $router->get('/api/purchases', [$purchaseController, 'index'], [$authMiddleware]);
+$router->get('/api/orders', [$orderController, 'index'], [$authMiddleware]);
+$router->post('/api/orders', [$orderController, 'store'], [$authMiddleware]);
 
 $router->dispatch(Request::capture());

@@ -33,6 +33,29 @@ final class ScoreController
         ]);
     }
 
+    public function show(Request $request): never
+    {
+        $scoreId = (int) ($request->query['id'] ?? 0);
+
+        if ($scoreId <= 0) {
+            Response::json([
+                'message' => 'Score not found.',
+            ], 404);
+        }
+
+        $score = $this->scores->find($scoreId);
+
+        if ($score === null) {
+            Response::json([
+                'message' => 'Score not found.',
+            ], 404);
+        }
+
+        Response::json([
+            'data' => $this->transformScore($score, $request),
+        ]);
+    }
+
     public function mine(Request $request): never
     {
         $auth = $request->attribute('auth', []);
@@ -143,6 +166,28 @@ final class ScoreController
         Response::file($absolutePath, $mimeType);
     }
 
+    public function pdf(Request $request): never
+    {
+        $relativePath = trim((string) ($request->query['path'] ?? ''));
+        $normalizedPath = str_replace('\\', '/', $relativePath);
+
+        if ($normalizedPath === '' || !str_starts_with($normalizedPath, 'stored/pdf/')) {
+            Response::json([
+                'message' => 'PDF not found.',
+            ], 404);
+        }
+
+        $absolutePath = BASE_PATH . '/' . ltrim($normalizedPath, '/');
+
+        if (!is_file($absolutePath)) {
+            Response::json([
+                'message' => 'PDF not found.',
+            ], 404);
+        }
+
+        Response::file($absolutePath, 'application/pdf');
+    }
+
     private function ensureComposer(Request $request): void
     {
         $auth = $request->attribute('auth', []);
@@ -165,6 +210,7 @@ final class ScoreController
     {
         $score['is_arranged'] = (bool) ($score['is_arranged'] ?? false);
         $score['image'] = $this->publicUrl((string) ($score['image'] ?? Score::DEFAULT_IMAGE), $request);
+        $score['pdf_url'] = $this->pdfUrl((string) ($score['pdf_path'] ?? ''), $request);
 
         return $score;
     }
@@ -261,6 +307,21 @@ final class ScoreController
         if (str_starts_with($normalizedPath, $publicRoot)) {
             $relativePath = substr($normalizedPath, strlen($publicRoot));
             return $this->baseUrl($request) . $relativePath;
+        }
+
+        return $path;
+    }
+
+    private function pdfUrl(string $path, Request $request): string
+    {
+        if ($path === '' || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        if (str_starts_with($normalizedPath, 'stored/pdf/')) {
+            return $this->baseUrl($request) . '/api/score-pdf?path=' . rawurlencode($normalizedPath);
         }
 
         return $path;

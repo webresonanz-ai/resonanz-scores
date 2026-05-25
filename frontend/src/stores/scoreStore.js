@@ -5,6 +5,7 @@ import { apiRequest } from "../lib/api";
 export const useScoreStore = defineStore("scores", () => {
   const scores = ref([]);
   const myScores = ref([]);
+  const currentScore = ref(null);
   const viewMode = ref("grid");
   const loading = ref(false);
   const error = ref("");
@@ -45,6 +46,24 @@ export const useScoreStore = defineStore("scores", () => {
     }
   }
 
+  async function fetchScore(id) {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await apiRequest(`/score?id=${id}`);
+      currentScore.value = response.data;
+
+      return response.data;
+    } catch (fetchError) {
+      currentScore.value = null;
+      error.value = fetchError.message;
+      throw fetchError;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function createScore(token, payload) {
     submitting.value = true;
     error.value = "";
@@ -70,12 +89,14 @@ export const useScoreStore = defineStore("scores", () => {
   return {
     scores,
     myScores,
+    currentScore,
     viewMode,
     loading,
     error,
     submitting,
     toggleView,
     fetchScores,
+    fetchScore,
     fetchMyScores,
     createScore,
   };

@@ -22,15 +22,20 @@
       </div>
       <div class="d-flex justify-content-between align-items-center mt-auto gap-3">
         <span class="price-tag">${{ score.price }}</span>
-        <button class="btn btn-outline-gold btn-sm px-3 py-2">
-          <i class="bi bi-cart-plus me-1"></i> Add to Cart
-        </button>
+        <RouterLink
+          :to="{ name: 'score-detail', params: { id: score.id } }"
+          class="btn btn-outline-gold btn-sm px-3 py-2"
+        >
+          <i class="bi bi-eye me-1"></i> View Score
+        </RouterLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { RouterLink } from "vue-router";
+
 defineProps({
   score: {
     type: Object,

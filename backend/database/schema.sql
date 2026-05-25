@@ -80,6 +80,28 @@ CREATE TABLE IF NOT EXISTS purchases (
   CONSTRAINT fk_purchases_score FOREIGN KEY (score_id) REFERENCES scores(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS orders (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  total_items INT UNSIGNED NOT NULL DEFAULT 0,
+  total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  status ENUM('pending', 'paid', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+  payment_status ENUM('waiting_payment', 'paid', 'failed') NOT NULL DEFAULT 'waiting_payment',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id INT UNSIGNED NOT NULL,
+  score_id INT UNSIGNED NOT NULL,
+  score_title VARCHAR(150) NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_order_items_score FOREIGN KEY (score_id) REFERENCES scores(id) ON DELETE CASCADE
+);
+
 INSERT INTO composers (id, name, period, nationality, image, works, biography, featured_work) VALUES
   (1, 'Ludwig van Beethoven', 'Classical/Romantic', 'German', 'https://picsum.photos/400/300?random=10', 138, 'One of the most influential composers in Western classical music.', 'Symphony No. 9'),
   (2, 'Frederic Chopin', 'Romantic', 'Polish', 'https://picsum.photos/400/300?random=11', 230, 'Poet of the piano who transformed expressive keyboard writing.', 'Nocturnes'),
@@ -107,4 +129,13 @@ INSERT INTO purchases (id, user_id, score_id, price, purchase_date) VALUES
   (1, 1, 1, 19.99, '2024-01-15'),
   (2, 1, 2, 14.99, '2023-12-20'),
   (3, 1, 3, 17.99, '2023-11-05')
+ON DUPLICATE KEY UPDATE price = VALUES(price);
+
+INSERT INTO orders (id, user_id, total_items, total_amount, status, payment_status) VALUES
+  (1, 1, 2, 34.98, 'pending', 'waiting_payment')
+ON DUPLICATE KEY UPDATE total_amount = VALUES(total_amount);
+
+INSERT INTO order_items (id, order_id, score_id, score_title, price) VALUES
+  (1, 1, 1, 'Moonlight Sonata', 19.99),
+  (2, 1, 2, 'Clair de Lune', 14.99)
 ON DUPLICATE KEY UPDATE price = VALUES(price);
