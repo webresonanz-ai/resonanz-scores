@@ -91,12 +91,43 @@
               </span>
             </div>
 
-            <div v-if="score.pdf_url" class="pdf-frame-wrap">
-              <iframe
-                :src="score.pdf_url"
-                class="pdf-frame"
-                :title="`PDF preview for ${score.title}`"
-              ></iframe>
+            <div
+              v-if="score.has_pdf_preview"
+              ref="pdfPreviewRef"
+              class="pdf-preview-wrap pdf-preview-protected"
+              @contextmenu.prevent
+              @dragstart.prevent
+              @copy.prevent
+              @cut.prevent
+            >
+              <div v-if="pdfLoading" class="pdf-preview-status">
+                <i class="bi bi-hourglass-split"></i>
+                <p class="mb-0">Loading PDF preview...</p>
+              </div>
+              <div v-else-if="pdfError" class="pdf-preview-status">
+                <i class="bi bi-exclamation-diamond"></i>
+                <p class="mb-0">{{ pdfError }}</p>
+              </div>
+              <div
+                v-else
+                class="pdf-pages"
+                role="document"
+                :aria-label="`PDF preview for ${score.title}`"
+              >
+                <div v-for="page in pdfPages" :key="page.pageNumber" class="pdf-page">
+                  <canvas
+                    :ref="(element) => mountPdfPageCanvas(element, page)"
+                    class="pdf-page-canvas"
+                    :width="page.width"
+                    :height="page.height"
+                    :aria-label="`Page ${page.pageNumber} of ${score.title}`"
+                  ></canvas>
+                  <div class="pdf-page-blur-shield">
+                    <span class="pdf-page-preview-label">For preview only</span>
+                  </div>
+                  <div class="pdf-page-interaction-shield" aria-hidden="true"></div>
+                </div>
+              </div>
             </div>
 
             <div v-else class="empty-state compact">
@@ -111,11 +142,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+import { fetchPreviewBinary } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 import { useCartStore } from "../stores/cartStore";
 import { useScoreStore } from "../stores/scoreStore";
+
+GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const route = useRoute();
 const router = useRouter();
@@ -124,6 +160,135 @@ const scoreStore = useScoreStore();
 const cartStore = useCartStore();
 
 const score = computed(() => scoreStore.currentScore);
+
+const pdfPreviewRef = ref(null);
+const pdfLoading = ref(false);
+const pdfError = ref("");
+const pdfPages = ref([]);
+
+let pdfRenderGeneration = 0;
+
+function clearPdfPages() {
+  pdfPages.value = [];
+}
+
+function mountPdfPageCanvas(element, page) {
+  if (!element || typeof page.paint !== "function") {
+    return;
+  }
+
+  page.paint(element);
+}
+
+function blockPreviewShortcuts(event) {
+  if (!pdfPreviewRef.value) {
+    return;
+  }
+
+  const key = event.key.toLowerCase();
+
+  if ((event.ctrlKey || event.metaKey) && ["s", "p", "c", "u"].includes(key)) {
+    event.preventDefault();
+  }
+}
+
+async function renderPdfPreview(scoreId) {
+  const generation = ++pdfRenderGeneration;
+  clearPdfPages();
+  pdfError.value = "";
+  pdfLoading.value = true;
+
+  try {
+    const pdfData = await fetchPreviewBinary(`/score-pdf-preview?id=${scoreId}`);
+    const loadingTask = getDocument({ data: pdfData });
+    const pdf = await loadingTask.promise;
+
+    if (generation !== pdfRenderGeneration) {
+      await pdf.destroy();
+      return;
+    }
+
+    const pages = [];
+    const scale = Math.min(window.devicePixelRatio || 1, 2) * 1.35;
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      if (generation !== pdfRenderGeneration) {
+        await pdf.destroy();
+        return;
+      }
+
+      const page = await pdf.getPage(pageNumber);
+      const viewport = page.getViewport({ scale });
+      const renderCanvas = document.createElement("canvas");
+      const context = renderCanvas.getContext("2d");
+
+      if (!context) {
+        throw new Error("Canvas is not available.");
+      }
+
+      renderCanvas.width = viewport.width;
+      renderCanvas.height = viewport.height;
+
+      await page.render({ canvas: renderCanvas, canvasContext: context, viewport }).promise;
+
+      pages.push({
+        pageNumber,
+        width: renderCanvas.width,
+        height: renderCanvas.height,
+        paint(target) {
+          const targetContext = target.getContext("2d");
+
+          if (!targetContext) {
+            return;
+          }
+
+          target.width = renderCanvas.width;
+          target.height = renderCanvas.height;
+          targetContext.drawImage(renderCanvas, 0, 0);
+        },
+      });
+    }
+
+    if (generation !== pdfRenderGeneration) {
+      await pdf.destroy();
+      return;
+    }
+
+    pdfPages.value = pages;
+    await pdf.destroy();
+  } catch {
+    if (generation === pdfRenderGeneration) {
+      pdfError.value = "Could not load PDF preview.";
+    }
+  } finally {
+    if (generation === pdfRenderGeneration) {
+      pdfLoading.value = false;
+    }
+  }
+}
+
+watch(
+  () => [score.value?.has_pdf_preview, Number(route.params.id)],
+  ([hasPreview, scoreId]) => {
+    pdfRenderGeneration += 1;
+    clearPdfPages();
+    pdfError.value = "";
+
+    if (!hasPreview || !Number.isFinite(scoreId) || scoreId <= 0) {
+      pdfLoading.value = false;
+      return;
+    }
+
+    renderPdfPreview(scoreId);
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  pdfRenderGeneration += 1;
+  clearPdfPages();
+  window.removeEventListener("keydown", blockPreviewShortcuts);
+});
 
 async function loadScore() {
   const scoreId = Number(route.params.id);
@@ -141,7 +306,10 @@ async function loadScore() {
   }
 }
 
-onMounted(loadScore);
+onMounted(() => {
+  loadScore();
+  window.addEventListener("keydown", blockPreviewShortcuts);
+});
 watch(() => route.params.id, loadScore);
 
 function handleAddToCart() {
@@ -230,18 +398,87 @@ function handleAddToCart() {
   color: var(--text);
 }
 
-.pdf-frame-wrap {
+.pdf-preview-wrap {
   overflow: hidden;
   border-radius: 20px;
   border: 1px solid rgba(214, 178, 94, 0.16);
   background: rgba(4, 8, 15, 0.65);
+  min-height: 24rem;
+  max-height: 72vh;
+  overflow-y: auto;
 }
 
-.pdf-frame {
+.pdf-preview-protected {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pdf-preview-status {
+  display: grid;
+  place-items: center;
+  gap: 0.8rem;
+  min-height: 24rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.pdf-preview-status i {
+  font-size: 2rem;
+  color: var(--gold-soft);
+}
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.pdf-page {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  line-height: 0;
+}
+
+.pdf-page-canvas {
   display: block;
   width: 100%;
-  min-height: 72vh;
-  border: 0;
+  height: auto;
+  pointer-events: none;
+}
+
+.pdf-page-interaction-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.pdf-page-blur-shield {
+  position: absolute;
+  inset: 25% 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.pdf-page-preview-label {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(120, 88, 28, 0.82);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  user-select: none;
 }
 
 .empty-state {
@@ -271,8 +508,8 @@ function handleAddToCart() {
     flex-direction: column;
   }
 
-  .pdf-frame {
-    min-height: 60vh;
+  .pdf-preview-wrap {
+    max-height: 60vh;
   }
 }
 </style>

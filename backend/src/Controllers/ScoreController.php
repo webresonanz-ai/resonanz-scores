@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config\Config;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
@@ -166,26 +167,39 @@ final class ScoreController
         Response::file($absolutePath, $mimeType);
     }
 
-    public function pdf(Request $request): never
+    public function pdfPreview(Request $request): never
     {
-        $relativePath = trim((string) ($request->query['path'] ?? ''));
-        $normalizedPath = str_replace('\\', '/', $relativePath);
-
-        if ($normalizedPath === '' || !str_starts_with($normalizedPath, 'stored/pdf/')) {
+        if (!$this->isPreviewRequest($request)) {
             Response::json([
-                'message' => 'PDF not found.',
+                'message' => 'PDF preview is not available for direct download.',
+            ], 403);
+        }
+
+        $scoreId = (int) ($request->query['id'] ?? 0);
+
+        if ($scoreId <= 0) {
+            Response::json([
+                'message' => 'Score not found.',
             ], 404);
         }
 
-        $absolutePath = BASE_PATH . '/' . ltrim($normalizedPath, '/');
+        $score = $this->scores->find($scoreId);
 
-        if (!is_file($absolutePath)) {
+        if ($score === null) {
             Response::json([
-                'message' => 'PDF not found.',
+                'message' => 'Score not found.',
             ], 404);
         }
 
-        Response::file($absolutePath, 'application/pdf');
+        $absolutePath = $this->resolvePdfAbsolutePath((string) ($score['pdf_path'] ?? ''));
+
+        if ($absolutePath === null) {
+            Response::json([
+                'message' => 'PDF preview is not available for this score.',
+            ], 404);
+        }
+
+        Response::previewFile($absolutePath, 'application/pdf', 'preview.pdf');
     }
 
     private function ensureComposer(Request $request): void
@@ -210,9 +224,65 @@ final class ScoreController
     {
         $score['is_arranged'] = (bool) ($score['is_arranged'] ?? false);
         $score['image'] = $this->publicUrl((string) ($score['image'] ?? Score::DEFAULT_IMAGE), $request);
-        $score['pdf_url'] = $this->pdfUrl((string) ($score['pdf_path'] ?? ''), $request);
+        $score['has_pdf_preview'] = (string) ($score['pdf_path'] ?? '') !== '';
+        unset($score['pdf_path']);
 
         return $score;
+    }
+
+    private function isPreviewRequest(Request $request): bool
+    {
+        if ($request->header('x-preview-request') !== '1') {
+            return false;
+        }
+
+        return $this->isAllowedFrontendRequest($request);
+    }
+
+    private function isAllowedFrontendRequest(Request $request): bool
+    {
+        $allowedOrigin = (string) Config::get('CORS_ALLOWED_ORIGIN', '*');
+
+        if ($allowedOrigin === '*' || $allowedOrigin === '') {
+            return true;
+        }
+
+        $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', $allowedOrigin))));
+        $origin = (string) $request->header('origin', '');
+        $referer = (string) $request->header('referer', '');
+
+        if ($origin === '' && $referer === '') {
+            return true;
+        }
+
+        foreach ($allowedOrigins as $allowed) {
+            if ($origin !== '' && $origin === $allowed) {
+                return true;
+            }
+
+            if ($referer !== '' && str_starts_with($referer, $allowed)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function resolvePdfAbsolutePath(string $path): ?string
+    {
+        if ($path === '' || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return null;
+        }
+
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        if (!str_starts_with($normalizedPath, 'stored/pdf/')) {
+            return null;
+        }
+
+        $absolutePath = BASE_PATH . '/' . ltrim($normalizedPath, '/');
+
+        return is_file($absolutePath) ? $absolutePath : null;
     }
 
     private function storeUploadedFile(array $file, string $directory, array $allowedExtensions): array
@@ -307,21 +377,6 @@ final class ScoreController
         if (str_starts_with($normalizedPath, $publicRoot)) {
             $relativePath = substr($normalizedPath, strlen($publicRoot));
             return $this->baseUrl($request) . $relativePath;
-        }
-
-        return $path;
-    }
-
-    private function pdfUrl(string $path, Request $request): string
-    {
-        if ($path === '' || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
-
-        $normalizedPath = str_replace('\\', '/', $path);
-
-        if (str_starts_with($normalizedPath, 'stored/pdf/')) {
-            return $this->baseUrl($request) . '/api/score-pdf?path=' . rawurlencode($normalizedPath);
         }
 
         return $path;

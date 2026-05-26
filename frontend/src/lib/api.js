@@ -31,4 +31,20 @@ export async function apiRequest(path, options = {}) {
   return data;
 }
 
+export async function fetchPreviewBinary(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "GET",
+    headers: {
+      "X-Preview-Request": "1",
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || "Request failed.");
+  }
+
+  return response.arrayBuffer();
+}
+
 export { API_BASE_URL };

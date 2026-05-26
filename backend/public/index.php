@@ -62,7 +62,7 @@ $orderController = new OrderController($database);
 $router->get('/api/health', [$healthController, 'index']);
 $router->get('/api/score', [$scoreController, 'show']);
 $router->get('/api/score-image', [$scoreController, 'image']);
-$router->get('/api/score-pdf', [$scoreController, 'pdf']);
+$router->get('/api/score-pdf-preview', [$scoreController, 'pdfPreview']);
 $router->post('/api/auth/register', [$authController, 'register']);
 $router->post('/api/auth/login', [$authController, 'login']);
 $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);
