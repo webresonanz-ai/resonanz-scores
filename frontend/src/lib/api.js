@@ -47,4 +47,26 @@ export async function fetchPreviewBinary(path) {
   return response.arrayBuffer();
 }
 
+export async function downloadScorePdf(scoreId, filename, token) {
+  const response = await fetch(`${API_BASE_URL}/scores/pdf-download?id=${scoreId}`, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to download PDF.");
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename?.endsWith(".pdf") ? filename : `${filename || "score"}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export { API_BASE_URL };

@@ -67,6 +67,7 @@ $router->get('/api/health', [$healthController, 'index']);
 $router->get('/api/score', [$scoreController, 'show']);
 $router->get('/api/score-image', [$scoreController, 'image']);
 $router->get('/api/score-pdf-preview', [$scoreController, 'pdfPreview']);
+$router->get('/api/scores/pdf-download', [$scoreController, 'pdfDownload'], [$authMiddleware]);
 $router->post('/api/auth/register', [$authController, 'register']);
 $router->post('/api/auth/login', [$authController, 'login']);
 $router->get('/api/auth/me', [$authController, 'me'], [$authMiddleware]);

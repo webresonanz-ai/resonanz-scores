@@ -116,7 +116,47 @@ final class Order
             'user_id' => $userId,
         ]);
 
-        return $statement->fetchAll();
+        $orders = $statement->fetchAll();
+
+        foreach ($orders as &$order) {
+            $order['items'] = $this->itemsForOrder((int) $order['id']);
+        }
+
+        unset($order);
+
+        return $orders;
+    }
+
+    public function userCanDownloadScore(int $userId, int $scoreId): bool
+    {
+        $orderStatement = $this->db->prepare(
+            'SELECT 1
+             FROM order_items oi
+             INNER JOIN orders o ON o.id = oi.order_id
+             WHERE o.user_id = :user_id
+               AND oi.score_id = :score_id
+               AND o.payment_status = :payment_status
+             LIMIT 1'
+        );
+        $orderStatement->execute([
+            'user_id' => $userId,
+            'score_id' => $scoreId,
+            'payment_status' => 'paid',
+        ]);
+
+        if ($orderStatement->fetchColumn()) {
+            return true;
+        }
+
+        $purchaseStatement = $this->db->prepare(
+            'SELECT 1 FROM purchases WHERE user_id = :user_id AND score_id = :score_id LIMIT 1'
+        );
+        $purchaseStatement->execute([
+            'user_id' => $userId,
+            'score_id' => $scoreId,
+        ]);
+
+        return (bool) $purchaseStatement->fetchColumn();
     }
 
     public function find(int $id): ?array
@@ -256,15 +296,34 @@ final class Order
     private function itemsForOrder(int $orderId): array
     {
         $statement = $this->db->prepare(
-            'SELECT id, score_id AS scoreId, score_title AS scoreTitle, price
-             FROM order_items
-             WHERE order_id = :order_id
-             ORDER BY id ASC'
+            'SELECT oi.id,
+                    oi.score_id AS scoreId,
+                    oi.score_title AS scoreTitle,
+                    oi.price,
+                    CASE
+                      WHEN s.pdf_path IS NOT NULL
+                       AND s.pdf_path <> \'\'
+                       AND s.pdf_path NOT LIKE \'http%\'
+                      THEN 1
+                      ELSE 0
+                    END AS hasPdfDownload
+             FROM order_items oi
+             LEFT JOIN scores s ON s.id = oi.score_id
+             WHERE oi.order_id = :order_id
+             ORDER BY oi.id ASC'
         );
         $statement->execute([
             'order_id' => $orderId,
         ]);
 
-        return $statement->fetchAll();
+        $items = $statement->fetchAll();
+
+        foreach ($items as &$item) {
+            $item['hasPdfDownload'] = (bool) ($item['hasPdfDownload'] ?? false);
+        }
+
+        unset($item);
+
+        return $items;
     }
 }

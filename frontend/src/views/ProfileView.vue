@@ -185,6 +185,42 @@
                     </button>
                   </template>
                 </div>
+
+                <div v-if="order.items?.length" class="order-items mt-3">
+                  <p class="text-muted small mb-2 mb-md-0">Items in this order</p>
+                  <ul class="list-unstyled mb-0">
+                    <li
+                      v-for="item in order.items"
+                      :key="`order-${order.id}-item-${item.id}`"
+                      class="order-item-row"
+                    >
+                      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                          <span class="text-gold d-block">{{ item.scoreTitle }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <span class="price-tag order-item-price">{{ formatPrice(item.price) }}</span>
+                          <button
+                            v-if="isOrderPaid(order) && item.hasPdfDownload"
+                            type="button"
+                            class="btn btn-outline-gold btn-sm px-3 py-2"
+                            :disabled="isDownloadBusy(item.scoreId)"
+                            @click="downloadOrderItemPdf(item)"
+                          >
+                            <i class="bi bi-download me-1"></i>
+                            {{ isDownloadBusy(item.scoreId) ? "Downloading..." : "Download PDF" }}
+                          </button>
+                          <span
+                            v-else-if="isOrderPaid(order) && !item.hasPdfDownload"
+                            class="text-muted small"
+                          >
+                            PDF not available
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <span class="price-tag">{{ formatPrice(order.totalAmount) }}</span>
             </div>
@@ -223,6 +259,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useAuthStore } from "../stores/authStore";
 import { useComposerRequestStore } from "../stores/composerRequestStore";
+import { downloadScorePdf } from "../lib/api.js";
 import { formatPrice } from "../lib/currency.js";
 import {
   cancelOrder,
@@ -235,6 +272,7 @@ const requestStore = useComposerRequestStore();
 const orderActionMessage = ref("");
 const orderActionError = ref(false);
 const orderBusy = reactive({});
+const downloadBusy = reactive({});
 
 const loginForm = reactive({
   email: "john.doe@email.com",
@@ -336,6 +374,32 @@ async function submitComposerRequest() {
 
 function isAwaitingPayment(order) {
   return order.status === "pending" && order.paymentStatus === "waiting_payment";
+}
+
+function isOrderPaid(order) {
+  return order.status === "paid" || order.paymentStatus === "paid";
+}
+
+function isDownloadBusy(scoreId) {
+  return Boolean(downloadBusy[scoreId]);
+}
+
+function setDownloadBusy(scoreId, value) {
+  downloadBusy[scoreId] = value;
+}
+
+async function downloadOrderItemPdf(item) {
+  setDownloadBusy(item.scoreId, true);
+  setOrderFeedback("");
+
+  try {
+    await downloadScorePdf(item.scoreId, item.scoreTitle, authStore.token);
+    setOrderFeedback(`Download started for "${item.scoreTitle}".`);
+  } catch (error) {
+    setOrderFeedback(error.message || "Failed to download PDF.", true);
+  } finally {
+    setDownloadBusy(item.scoreId, false);
+  }
 }
 
 function setOrderBusy(orderId, action, value) {
@@ -499,5 +563,20 @@ async function cancelPendingOrder(order) {
 .request-status {
   padding-top: 0.9rem;
   border-top: 1px solid rgba(214, 178, 94, 0.2);
+}
+
+.order-items {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(214, 178, 94, 0.14);
+}
+
+.order-item-row + .order-item-row {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(214, 178, 94, 0.1);
+}
+
+.order-item-price {
+  font-size: 0.95rem;
 }
 </style>

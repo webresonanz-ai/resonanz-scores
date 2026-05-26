@@ -56,6 +56,7 @@ php -S localhost:8000 -t backend/public
 - `POST /api/payments/checkout` (Bearer token required, Midtrans Snap)
 - `GET /api/payments/midtrans-status` (Bearer token required)
 - `POST /api/payments/webhook` (Midtrans notification)
+- `GET /api/scores/pdf-download` (Bearer token required, paid orders only)
 
 ## Demo Login
 

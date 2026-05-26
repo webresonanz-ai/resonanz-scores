@@ -35,4 +35,37 @@ final class Response
         readfile($path);
         exit;
     }
+
+    public static function downloadFile(string $path, string $contentType, string $filename): never
+    {
+        http_response_code(200);
+        header('Content-Type: ' . $contentType);
+        header('Content-Length: ' . (string) filesize($path));
+        header('Content-Disposition: attachment; filename="' . self::sanitizeFilename($filename) . '"');
+        header('Cache-Control: no-store, no-cache, must-revalidate, private');
+        header('Pragma: no-cache');
+        header('X-Content-Type-Options: nosniff');
+        readfile($path);
+        exit;
+    }
+
+    public static function downloadContent(string $content, string $contentType, string $filename): never
+    {
+        http_response_code(200);
+        header('Content-Type: ' . $contentType);
+        header('Content-Length: ' . (string) strlen($content));
+        header('Content-Disposition: attachment; filename="' . self::sanitizeFilename($filename) . '"');
+        header('Cache-Control: no-store, no-cache, must-revalidate, private');
+        header('Pragma: no-cache');
+        header('X-Content-Type-Options: nosniff');
+        echo $content;
+        exit;
+    }
+
+    private static function sanitizeFilename(string $filename): string
+    {
+        $sanitized = preg_replace('/[^A-Za-z0-9._ -]+/', '', $filename) ?? 'score.pdf';
+
+        return trim($sanitized) !== '' ? trim($sanitized) : 'score.pdf';
+    }
 }

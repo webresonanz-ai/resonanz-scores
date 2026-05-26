@@ -8,24 +8,30 @@ use App\Config\Config;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
+use App\Models\Order;
 use App\Models\Score;
 use App\Models\User;
 use App\Support\Currency;
+use App\Support\PdfLicenseStamper;
 use RuntimeException;
 
 final class ScoreController
 {
     private Score $scores;
     private User $users;
+    private Order $orders;
     private string $pdfStoragePath;
     private string $imageStoragePath;
+    private PdfLicenseStamper $pdfLicenseStamper;
 
     public function __construct(Database $database)
     {
         $this->scores = new Score($database);
         $this->users = new User($database);
+        $this->orders = new Order($database);
         $this->pdfStoragePath = BASE_PATH . '/stored/pdf';
         $this->imageStoragePath = BASE_PATH . '/stored/images';
+        $this->pdfLicenseStamper = new PdfLicenseStamper();
     }
 
     public function index(Request $request): never
@@ -201,6 +207,56 @@ final class ScoreController
         }
 
         Response::previewFile($absolutePath, 'application/pdf', 'preview.pdf');
+    }
+
+    public function pdfDownload(Request $request): never
+    {
+        $auth = $request->attribute('auth', []);
+        $userId = (int) ($auth['sub'] ?? 0);
+        $scoreId = (int) ($request->query['id'] ?? 0);
+
+        if ($scoreId <= 0) {
+            Response::json([
+                'message' => 'Score not found.',
+            ], 404);
+        }
+
+        if (!$this->orders->userCanDownloadScore($userId, $scoreId)) {
+            Response::json([
+                'message' => 'You must complete payment before downloading this score.',
+            ], 403);
+        }
+
+        $score = $this->scores->findApproved($scoreId);
+
+        if ($score === null) {
+            Response::json([
+                'message' => 'Score not found.',
+            ], 404);
+        }
+
+        $absolutePath = $this->resolvePdfAbsolutePath((string) ($score['pdf_path'] ?? ''));
+
+        if ($absolutePath === null) {
+            Response::json([
+                'message' => 'PDF download is not available for this score.',
+            ], 404);
+        }
+
+        $title = (string) ($score['title'] ?? 'score');
+        $filename = preg_replace('/[^A-Za-z0-9._ -]+/', '', $title) ?: 'score';
+        $filename = rtrim($filename) . '.pdf';
+        $customerName = trim((string) (($this->users->findById($userId)['name'] ?? 'Customer')));
+
+        try {
+            $licensedPdf = $this->pdfLicenseStamper->stampFile($absolutePath, $customerName);
+        } catch (RuntimeException $exception) {
+            Response::json([
+                'message' => $exception->getMessage(),
+            ], 500);
+        }
+
+        Response::downloadContent($licensedPdf, 'application/pdf', $filename);
     }
 
     private function ensureComposer(Request $request): void
