@@ -10,7 +10,7 @@
           <h2 class="section-title text-gold">Publish a new composition from one focused dashboard</h2>
           <p class="section-description">
             Upload the score PDF, optional display image, and all of the storefront details in one
-            place. The page count is calculated automatically from the uploaded PDF.
+            place. New compositions stay pending until an admin or manager approves them for the catalog.
           </p>
         </div>
         <div class="dashboard-stat">
@@ -183,7 +183,12 @@
                   <div class="p-4">
                     <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                       <h5 class="text-gold mb-0">{{ score.title }}</h5>
-                      <span class="price-tag">${{ formatPrice(score.price) }}</span>
+                      <div class="d-flex flex-column align-items-end gap-2">
+                        <span class="price-tag">${{ formatPrice(score.price) }}</span>
+                        <span class="status-badge" :class="statusClass(score.approval_status)">
+                          {{ statusLabel(score.approval_status) }}
+                        </span>
+                      </div>
                     </div>
                     <p class="text-muted small mb-2">
                       {{ score.composer }}
@@ -373,6 +378,30 @@ function formatPrice(value) {
   return Number(value || 0).toFixed(2);
 }
 
+function statusLabel(status) {
+  if (status === "approved") {
+    return "Published";
+  }
+
+  if (status === "declined") {
+    return "Declined";
+  }
+
+  return "Pending approval";
+}
+
+function statusClass(status) {
+  if (status === "approved") {
+    return "status-approved";
+  }
+
+  if (status === "declined") {
+    return "status-declined";
+  }
+
+  return "status-pending";
+}
+
 async function submitComposition() {
   state.successMessage = "";
 
@@ -396,7 +425,7 @@ async function submitComposition() {
 
   try {
     const created = await scoreStore.createScore(authStore.token, payload);
-    state.successMessage = `Saved "${created.title}" with ${created.pages} pages.`;
+    state.successMessage = `"${created.title}" was submitted for approval (${created.pages} pages). You will receive an email when it is reviewed.`;
     resetForm();
   } catch (error) {
     return error;
@@ -477,6 +506,34 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  color: #f0d58a;
+  border: 1px solid rgba(240, 213, 138, 0.45);
+  background: rgba(240, 213, 138, 0.12);
+}
+
+.status-approved {
+  color: #9fd9b1;
+  border: 1px solid rgba(159, 217, 177, 0.45);
+  background: rgba(159, 217, 177, 0.12);
+}
+
+.status-declined {
+  color: #f0a6a6;
+  border: 1px solid rgba(240, 166, 166, 0.45);
+  background: rgba(240, 166, 166, 0.12);
 }
 
 @media (max-width: 767.98px) {

@@ -1,15 +1,15 @@
 <template>
   <div class="container page-section py-5 mt-5">
     <div v-if="!authStore.isAuthenticated" class="surface-card p-4 p-lg-5 text-center">
-      <h3 class="text-gold mb-3">Admin login required</h3>
-      <p class="text-muted mb-4">Please sign in with an admin account to review composer requests.</p>
+      <h3 class="text-gold mb-3">Staff login required</h3>
+      <p class="text-muted mb-4">Please sign in with an admin or manager account to review composer requests.</p>
       <router-link class="btn btn-outline-gold" to="/profile">Go to Login</router-link>
     </div>
 
-    <div v-else-if="!authStore.isAdmin" class="surface-card p-4 p-lg-5 text-center">
-      <h3 class="text-gold mb-3">Admin access only</h3>
+    <div v-else-if="!authStore.isStaff" class="surface-card p-4 p-lg-5 text-center">
+      <h3 class="text-gold mb-3">Staff access only</h3>
       <p class="text-muted mb-0">
-        This page is only available for admin accounts that verify composer requests.
+        This page is only available for admin and manager accounts that verify composer requests.
       </p>
     </div>
 
@@ -94,15 +94,15 @@ const authStore = useAuthStore();
 const requestStore = useComposerRequestStore();
 
 onMounted(() => {
-  if (authStore.isAdmin) {
+  if (authStore.isStaff) {
     requestStore.fetchPendingRequests(authStore.token);
   }
 });
 
 watch(
-  () => authStore.isAdmin,
-  (isAdmin) => {
-    if (isAdmin) {
+  () => authStore.isStaff,
+  (isStaff) => {
+    if (isStaff) {
       requestStore.fetchPendingRequests(authStore.token);
       return;
     }

@@ -22,15 +22,53 @@
               <i class="bi bi-house-door me-1"></i> Home
             </router-link>
           </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/scores" active-class="active">
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              :class="{ active: isScoresRoute }"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
               <i class="bi bi-file-earmark-music me-1"></i> Scores
-            </router-link>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end nav-dropdown">
+              <li>
+                <router-link class="dropdown-item" to="/scores">
+                  Browse catalog
+                </router-link>
+              </li>
+              <li v-if="authStore.isStaff">
+                <router-link class="dropdown-item" to="/admin/composition-approval">
+                  Approve compositions
+                </router-link>
+              </li>
+            </ul>
           </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/composers" active-class="active">
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              :class="{ active: isComposersRoute }"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
               <i class="bi bi-people me-1"></i> Composers
-            </router-link>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end nav-dropdown">
+              <li>
+                <router-link class="dropdown-item" to="/composers">
+                  Browse composers
+                </router-link>
+              </li>
+              <li v-if="authStore.isStaff">
+                <router-link class="dropdown-item" to="/admin/composer-verification">
+                  Verify composers
+                </router-link>
+              </li>
+            </ul>
           </li>
           <li class="nav-item">
             <router-link class="nav-link" to="/profile" active-class="active">
@@ -49,7 +87,7 @@
             >
               <i class="bi bi-journal-music me-1"></i> Composer Dashboard
             </a>
-            <ul class="dropdown-menu dropdown-menu-end composer-dropdown">
+            <ul class="dropdown-menu dropdown-menu-end nav-dropdown">
               <li>
                 <router-link class="dropdown-item" to="/composer/profile">
                   Composer Profile
@@ -61,11 +99,6 @@
                 </router-link>
               </li>
             </ul>
-          </li>
-          <li v-if="authStore.isAdmin" class="nav-item">
-            <router-link class="nav-link" to="/admin/composer-verification" active-class="active">
-              <i class="bi bi-shield-lock me-1"></i> Verify Composers
-            </router-link>
           </li>
           <li v-if="authStore.isAuthenticated" class="nav-item">
             <button class="btn btn-link nav-link" type="button" @click="authStore.logout()">
@@ -94,6 +127,12 @@ const cartStore = useCartStore();
 const route = useRoute();
 
 const isComposerRoute = computed(() => route.path.startsWith("/composer/"));
+const isScoresRoute = computed(
+  () => route.path === "/scores" || route.path.startsWith("/scores/") || route.path === "/admin/composition-approval",
+);
+const isComposersRoute = computed(
+  () => route.path === "/composers" || route.path === "/admin/composer-verification",
+);
 </script>
 
 <style scoped>
@@ -144,7 +183,7 @@ const isComposerRoute = computed(() => route.path.startsWith("/composer/"));
   padding-inline: 1rem;
 }
 
-.composer-dropdown {
+.nav-dropdown {
   min-width: 14rem;
   border-radius: 18px;
   border: 1px solid rgba(214, 178, 94, 0.2);

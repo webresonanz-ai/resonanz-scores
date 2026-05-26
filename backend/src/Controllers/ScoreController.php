@@ -30,7 +30,7 @@ final class ScoreController
     public function index(Request $request): never
     {
         Response::json([
-            'data' => $this->transformScores($this->scores->all(), $request),
+            'data' => $this->transformScores($this->scores->allApproved(), $request),
         ]);
     }
 
@@ -44,7 +44,7 @@ final class ScoreController
             ], 404);
         }
 
-        $score = $this->scores->find($scoreId);
+        $score = $this->scores->findApproved($scoreId);
 
         if ($score === null) {
             Response::json([
@@ -139,9 +139,9 @@ final class ScoreController
         }
 
         Response::json([
-            'message' => 'Composition created successfully.',
+            'message' => 'Composition submitted for approval. You will receive an email once it is reviewed.',
             'data' => $this->transformScore($created, $request),
-        ]);
+        ], 201);
     }
 
     public function image(Request $request): never
@@ -183,7 +183,7 @@ final class ScoreController
             ], 404);
         }
 
-        $score = $this->scores->find($scoreId);
+        $score = $this->scores->findApproved($scoreId);
 
         if ($score === null) {
             Response::json([
@@ -225,6 +225,7 @@ final class ScoreController
         $score['is_arranged'] = (bool) ($score['is_arranged'] ?? false);
         $score['image'] = $this->publicUrl((string) ($score['image'] ?? Score::DEFAULT_IMAGE), $request);
         $score['has_pdf_preview'] = (string) ($score['pdf_path'] ?? '') !== '';
+        $score['approval_status'] = (string) ($score['approval_status'] ?? 'approved');
         unset($score['pdf_path']);
 
         return $score;

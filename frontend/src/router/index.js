@@ -49,6 +49,11 @@ const router = createRouter({
       name: "composer-verification",
       component: () => import("../views/AdminComposerVerificationView.vue"),
     },
+    {
+      path: "/admin/composition-approval",
+      name: "composition-approval",
+      component: () => import("../views/AdminCompositionApprovalView.vue"),
+    },
   ],
 });
 

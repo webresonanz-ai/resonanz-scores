@@ -75,7 +75,6 @@ export const useScoreStore = defineStore("scores", () => {
         body: payload,
       });
       myScores.value = [response.data, ...myScores.value];
-      scores.value = [response.data, ...scores.value];
 
       return response.data;
     } catch (submitError) {

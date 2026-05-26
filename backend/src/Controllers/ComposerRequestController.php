@@ -43,9 +43,9 @@ final class ComposerRequestController
         $user = $this->currentUser($request);
         $role = (string) ($user['role'] ?? 'customer');
 
-        if ($role === 'admin') {
+        if (in_array($role, ['admin', 'manager'], true)) {
             Response::json([
-                'message' => 'Admin accounts cannot submit composer requests.',
+                'message' => 'Staff accounts cannot submit composer requests.',
             ], 422);
         }
 

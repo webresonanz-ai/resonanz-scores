@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('customer', 'composer', 'admin') NOT NULL DEFAULT 'customer',
+  role ENUM('customer', 'composer', 'manager', 'admin') NOT NULL DEFAULT 'customer',
   location VARCHAR(120) DEFAULT '',
   bio VARCHAR(255) DEFAULT 'Music Enthusiast',
   avatar VARCHAR(255) DEFAULT 'https://picsum.photos/150/150?random=100',
@@ -14,7 +14,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS role ENUM('customer', 'composer', 'admin') NOT NULL DEFAULT 'customer' AFTER password;
+  MODIFY COLUMN role ENUM('customer', 'composer', 'manager', 'admin') NOT NULL DEFAULT 'customer';
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS role ENUM('customer', 'composer', 'manager', 'admin') NOT NULL DEFAULT 'customer' AFTER password;
 
 CREATE TABLE IF NOT EXISTS composers (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -58,8 +61,12 @@ CREATE TABLE IF NOT EXISTS scores (
   description TEXT NOT NULL,
   pages INT UNSIGNED NOT NULL DEFAULT 0,
   rating DECIMAL(2,1) NOT NULL DEFAULT 0,
+  approval_status ENUM('pending', 'approved', 'declined') NOT NULL DEFAULT 'approved',
+  reviewed_by INT UNSIGNED NULL,
+  reviewed_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_scores_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_scores_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_scores_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 ALTER TABLE scores
@@ -68,6 +75,13 @@ ALTER TABLE scores
   ADD COLUMN IF NOT EXISTS is_arranged TINYINT(1) NOT NULL DEFAULT 0 AFTER arranger,
   ADD COLUMN IF NOT EXISTS pdf_path VARCHAR(255) NOT NULL DEFAULT '' AFTER image,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER rating;
+
+ALTER TABLE scores
+  ADD COLUMN IF NOT EXISTS approval_status ENUM('pending', 'approved', 'declined') NOT NULL DEFAULT 'approved' AFTER rating,
+  ADD COLUMN IF NOT EXISTS reviewed_by INT UNSIGNED NULL AFTER approval_status,
+  ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP NULL DEFAULT NULL AFTER reviewed_by;
+
+UPDATE scores SET approval_status = 'approved' WHERE approval_status IS NULL OR approval_status = '';
 
 CREATE TABLE IF NOT EXISTS purchases (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -122,7 +136,8 @@ ON DUPLICATE KEY UPDATE title = VALUES(title);
 
 INSERT INTO users (id, name, email, password, role, location, bio, avatar) VALUES
   (1, 'John Doe', 'john.doe@email.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'customer', 'New York, USA', 'Music Enthusiast', 'https://picsum.photos/150/150?random=100'),
-  (2, 'Admin User', 'admin@theresonanz.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'admin', 'Jakarta, Indonesia', 'Platform Administrator', 'https://picsum.photos/150/150?random=101')
+  (2, 'Admin User', 'admin@theresonanz.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'admin', 'Jakarta, Indonesia', 'Platform Administrator', 'https://picsum.photos/150/150?random=101'),
+  (3, 'Manager User', 'manager@theresonanz.com', '$2y$12$PPSfkVteIhMw93H79Asqz.uxja4SjkeipG9kunMlav257a9A9hF7K', 'manager', 'Jakarta, Indonesia', 'Catalog Manager', 'https://picsum.photos/150/150?random=102')
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
 INSERT INTO purchases (id, user_id, score_id, price, purchase_date) VALUES
