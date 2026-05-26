@@ -27,6 +27,7 @@ use App\Controllers\ComposerProfileController;
 use App\Controllers\ComposerRequestController;
 use App\Controllers\HealthController;
 use App\Controllers\OrderController;
+use App\Controllers\PaymentController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ScoreApprovalController;
 use App\Controllers\ScoreController;
@@ -60,6 +61,7 @@ $composerProfileController = new ComposerProfileController($database);
 $composerRequestController = new ComposerRequestController($database, $mailService);
 $purchaseController = new PurchaseController($database);
 $orderController = new OrderController($database);
+$paymentController = new PaymentController($database);
 
 $router->get('/api/health', [$healthController, 'index']);
 $router->get('/api/score', [$scoreController, 'show']);
@@ -84,6 +86,12 @@ $router->post('/api/admin/score-approvals/approve', [$scoreApprovalController, '
 $router->post('/api/admin/score-approvals/decline', [$scoreApprovalController, 'decline'], [$authMiddleware, $staffMiddleware]);
 $router->get('/api/purchases', [$purchaseController, 'index'], [$authMiddleware]);
 $router->get('/api/orders', [$orderController, 'index'], [$authMiddleware]);
+$router->get('/api/orders/detail', [$orderController, 'show'], [$authMiddleware]);
+$router->get('/api/orders/by-number', [$orderController, 'byOrderNumber'], [$authMiddleware]);
+$router->post('/api/orders/cancel', [$orderController, 'cancel'], [$authMiddleware]);
 $router->post('/api/orders', [$orderController, 'store'], [$authMiddleware]);
+$router->post('/api/payments/checkout', [$paymentController, 'checkout'], [$authMiddleware]);
+$router->get('/api/payments/midtrans-status', [$paymentController, 'midtransStatus'], [$authMiddleware]);
+$router->post('/api/payments/webhook', [$paymentController, 'webhook']);
 
 $router->dispatch(Request::capture());

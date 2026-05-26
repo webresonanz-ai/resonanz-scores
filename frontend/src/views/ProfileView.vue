@@ -125,26 +125,68 @@
           </span>
           <h4 class="text-gold auth-title mb-4">Recent orders</h4>
 
+          <p v-if="orderActionMessage" class="small mb-3" :class="orderActionError ? 'text-danger' : 'text-success'">
+            {{ orderActionMessage }}
+          </p>
+
           <div
             v-for="order in authStore.orders"
             :key="`order-${order.id}`"
             class="purchase-item detail-list-item mb-3"
           >
-            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
-              <div>
-                <h6 class="text-gold mb-1">Order #{{ order.id }}</h6>
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+              <div class="flex-grow-1">
+                <h6 class="text-gold mb-1">
+                  Order #{{ order.id }}
+                  <span v-if="order.orderNumber" class="text-muted fw-normal small">
+                    ({{ order.orderNumber }})
+                  </span>
+                </h6>
                 <p class="text-muted mb-1 small">
                   {{ order.totalItems }} item(s) • {{ formatDate(order.createdAt) }}
                 </p>
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="d-flex gap-2 flex-wrap mb-3">
                   <span class="difficulty-badge text-uppercase">{{ order.status }}</span>
                   <span class="meta-chip">
                     <i class="bi bi-credit-card text-gold"></i>
                     {{ order.paymentStatus }}
                   </span>
                 </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-gold btn-sm px-3 py-2"
+                    :disabled="isOrderBusy(order.id)"
+                    @click="refreshOrderPayment(order)"
+                  >
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    {{ orderBusyLabel(order.id, "refresh") }}
+                  </button>
+
+                  <template v-if="isAwaitingPayment(order)">
+                    <button
+                      type="button"
+                      class="btn btn-outline-gold btn-sm px-3 py-2"
+                      :disabled="isOrderBusy(order.id)"
+                      @click="reprocessPayment(order)"
+                    >
+                      <i class="bi bi-credit-card me-1"></i>
+                      {{ orderBusyLabel(order.id, "pay") }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-light btn-sm px-3 py-2"
+                      :disabled="isOrderBusy(order.id)"
+                      @click="cancelPendingOrder(order)"
+                    >
+                      <i class="bi bi-x-circle me-1"></i>
+                      {{ orderBusyLabel(order.id, "cancel") }}
+                    </button>
+                  </template>
+                </div>
               </div>
-              <span class="price-tag">${{ order.totalAmount }}</span>
+              <span class="price-tag">{{ formatPrice(order.totalAmount) }}</span>
             </div>
           </div>
 
@@ -164,7 +206,7 @@
                 <h6 class="text-gold mb-1">{{ purchase.title }}</h6>
                 <p class="text-muted mb-0 small">Purchased on {{ formatDate(purchase.purchaseDate) }}</p>
               </div>
-              <span class="price-tag">${{ purchase.price }}</span>
+              <span class="price-tag">{{ formatPrice(purchase.price) }}</span>
             </div>
           </div>
 
@@ -178,12 +220,21 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useAuthStore } from "../stores/authStore";
 import { useComposerRequestStore } from "../stores/composerRequestStore";
+import { formatPrice } from "../lib/currency.js";
+import {
+  cancelOrder,
+  openPaymentModal,
+  updateMidtransPaymentStatus,
+} from "../lib/payment.js";
 
 const authStore = useAuthStore();
 const requestStore = useComposerRequestStore();
+const orderActionMessage = ref("");
+const orderActionError = ref(false);
+const orderBusy = reactive({});
 
 const loginForm = reactive({
   email: "john.doe@email.com",
@@ -280,6 +331,154 @@ async function submitComposerRequest() {
     await requestStore.submitRequest(authStore.token);
   } catch (error) {
     return error;
+  }
+}
+
+function isAwaitingPayment(order) {
+  return order.status === "pending" && order.paymentStatus === "waiting_payment";
+}
+
+function setOrderBusy(orderId, action, value) {
+  if (!orderBusy[orderId]) {
+    orderBusy[orderId] = {};
+  }
+  orderBusy[orderId][action] = value;
+}
+
+function isOrderBusy(orderId) {
+  const state = orderBusy[orderId];
+  return Boolean(state?.refresh || state?.pay || state?.cancel);
+}
+
+function orderBusyLabel(orderId, action) {
+  const state = orderBusy[orderId];
+  if (state?.refresh && action === "refresh") {
+    return "Refreshing...";
+  }
+  if (state?.pay && action === "pay") {
+    return "Opening...";
+  }
+  if (state?.cancel && action === "cancel") {
+    return "Cancelling...";
+  }
+
+  if (action === "refresh") {
+    return "Refresh status";
+  }
+  if (action === "pay") {
+    return "Pay now";
+  }
+  return "Cancel order";
+}
+
+function setOrderFeedback(message, isError = false) {
+  orderActionMessage.value = message;
+  orderActionError.value = isError;
+}
+
+function formatMidtransStatus(status) {
+  if (!status) {
+    return "Status checked. No Midtrans update yet.";
+  }
+
+  return `Midtrans: ${status}`;
+}
+
+async function refreshOrderPayment(order) {
+  const orderNumber = order.orderNumber;
+
+  if (!orderNumber) {
+    setOrderFeedback("This order has no payment reference yet.", true);
+    return;
+  }
+
+  setOrderBusy(order.id, "refresh", true);
+  setOrderFeedback("");
+
+  try {
+    const result = await updateMidtransPaymentStatus(orderNumber, authStore.token);
+    await authStore.fetchProfile();
+    const updated = authStore.orders.find((entry) => entry.id === order.id);
+    const transactionStatus = result.transaction_status;
+    const paymentStatus = updated?.paymentStatus ?? order.paymentStatus;
+    setOrderFeedback(
+      `${formatMidtransStatus(transactionStatus)} Order payment is now ${paymentStatus}.`,
+    );
+  } catch (error) {
+    setOrderFeedback(error.message || "Failed to refresh payment status.", true);
+  } finally {
+    setOrderBusy(order.id, "refresh", false);
+  }
+}
+
+async function reprocessPayment(order) {
+  if (!isAwaitingPayment(order)) {
+    return;
+  }
+
+  const orderNumber = order.orderNumber;
+
+  if (!orderNumber) {
+    setOrderFeedback("This order has no payment reference yet.", true);
+    return;
+  }
+
+  setOrderBusy(order.id, "pay", true);
+  setOrderFeedback("");
+
+  try {
+    await openPaymentModal(
+      {
+        id: order.id,
+        orderNumber,
+        totalAmount: order.totalAmount,
+        billing_name: authStore.user?.name,
+        billing_email: authStore.user?.email,
+      },
+      {
+        token: authStore.token,
+        user: authStore.user,
+        onComplete: async (result) => {
+          await authStore.fetchProfile();
+          const updated = result?.order ?? order;
+          setOrderFeedback(
+            `Payment updated for ${orderNumber}. Status: ${updated.status}, payment: ${updated.paymentStatus}.`,
+          );
+        },
+        onError: (error) => {
+          setOrderFeedback(error.message || "Payment could not be started.", true);
+        },
+      },
+    );
+  } catch (error) {
+    setOrderFeedback(error.message || "Payment could not be started.", true);
+  } finally {
+    setOrderBusy(order.id, "pay", false);
+  }
+}
+
+async function cancelPendingOrder(order) {
+  if (!isAwaitingPayment(order)) {
+    return;
+  }
+
+  const confirmed = window.confirm(`Cancel order #${order.id}? This cannot be undone.`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  setOrderBusy(order.id, "cancel", true);
+  setOrderFeedback("");
+
+  try {
+    await cancelOrder(order.id, authStore.token);
+    await authStore.fetchProfile();
+    setOrderFeedback(`Order #${order.id} has been cancelled.`);
+  } catch (error) {
+    setOrderFeedback(error.message || "Failed to cancel order.", true);
+  } finally {
+    setOrderBusy(order.id, "cancel", false);
   }
 }
 </script>

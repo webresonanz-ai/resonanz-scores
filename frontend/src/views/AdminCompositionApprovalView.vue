@@ -64,7 +64,7 @@
                   <span class="difficulty-badge">{{ score.genre }}</span>
                   <span class="difficulty-badge">{{ score.difficulty }}</span>
                   <span class="difficulty-badge">{{ score.pages }} pages</span>
-                  <span class="price-tag">${{ formatPrice(score.price) }}</span>
+                  <span class="price-tag">{{ formatPrice(score.price) }}</span>
                 </div>
                 <p class="text-muted mb-0">{{ score.description }}</p>
               </div>
@@ -97,6 +97,7 @@
 import { onMounted, watch } from "vue";
 import { useAuthStore } from "../stores/authStore";
 import { useScoreApprovalStore } from "../stores/scoreApprovalStore";
+import { formatPrice } from "../lib/currency.js";
 
 const authStore = useAuthStore();
 const approvalStore = useScoreApprovalStore();
@@ -129,10 +130,6 @@ async function handleReview(scoreId, action) {
   } catch (error) {
     return error;
   }
-}
-
-function formatPrice(value) {
-  return Number(value || 0).toFixed(2);
 }
 
 function formatDateTime(value) {

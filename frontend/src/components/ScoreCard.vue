@@ -21,7 +21,7 @@
         </span>
       </div>
       <div class="d-flex justify-content-between align-items-center mt-auto gap-3">
-        <span class="price-tag">${{ score.price }}</span>
+        <span class="price-tag">{{ formatPrice(score.price) }}</span>
         <RouterLink
           :to="{ name: 'score-detail', params: { id: score.id } }"
           class="btn btn-outline-gold btn-sm px-3 py-2"
@@ -35,6 +35,7 @@
 
 <script setup>
 import { RouterLink } from "vue-router";
+import { formatPrice } from "../lib/currency.js";
 
 defineProps({
   score: {

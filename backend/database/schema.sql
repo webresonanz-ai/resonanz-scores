@@ -96,14 +96,23 @@ CREATE TABLE IF NOT EXISTS purchases (
 
 CREATE TABLE IF NOT EXISTS orders (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_number VARCHAR(64) NOT NULL,
   user_id INT UNSIGNED NOT NULL,
   total_items INT UNSIGNED NOT NULL DEFAULT 0,
   total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
   status ENUM('pending', 'paid', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
   payment_status ENUM('waiting_payment', 'paid', 'failed') NOT NULL DEFAULT 'waiting_payment',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_orders_order_number (order_number),
   CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS order_number VARCHAR(64) NULL AFTER id;
+
+UPDATE orders
+SET order_number = CONCAT('SMS-', id, '-', UNIX_TIMESTAMP(COALESCE(created_at, NOW())))
+WHERE order_number IS NULL OR order_number = '';
 
 CREATE TABLE IF NOT EXISTS order_items (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -126,12 +135,12 @@ INSERT INTO composers (id, name, period, nationality, image, works, biography, f
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO scores (id, user_id, title, composer, arranger, is_arranged, genre, difficulty, price, image, pdf_path, description, pages, rating) VALUES
-  (1, NULL, 'Moonlight Sonata', 'Ludwig van Beethoven', NULL, 0, 'Classical', 'Advanced', 19.99, 'https://picsum.photos/400/300?random=1', '', 'Complete piano sonata No. 14 in C-sharp minor.', 23, 4.9),
-  (2, NULL, 'Clair de Lune', 'Claude Debussy', NULL, 0, 'Impressionist', 'Intermediate', 14.99, 'https://picsum.photos/400/300?random=2', '', 'From Suite Bergamasque, one of the most beloved piano pieces.', 15, 4.8),
-  (3, NULL, 'Nocturne in E-flat Major', 'Frederic Chopin', NULL, 0, 'Romantic', 'Advanced', 17.99, 'https://picsum.photos/400/300?random=3', '', 'Op. 9 No. 2, one of Chopin''s most famous nocturnes.', 12, 4.9),
-  (4, NULL, 'The Entertainer', 'Scott Joplin', NULL, 0, 'Ragtime', 'Intermediate', 12.99, 'https://picsum.photos/400/300?random=4', '', 'Classic ragtime piece, perfect for intermediate pianists.', 8, 4.7),
-  (5, NULL, 'Canon in D', 'Johann Pachelbel', NULL, 0, 'Baroque', 'Beginner', 9.99, 'https://picsum.photos/400/300?random=5', '', 'Beautiful and accessible arrangement for piano.', 6, 4.6),
-  (6, NULL, 'Rhapsody in Blue', 'George Gershwin', NULL, 0, 'Jazz/Classical', 'Advanced', 24.99, 'https://picsum.photos/400/300?random=6', '', 'Iconic fusion of classical music with jazz elements.', 35, 4.9)
+  (1, NULL, 'Moonlight Sonata', 'Ludwig van Beethoven', NULL, 0, 'Classical', 'Advanced', 320000, 'https://picsum.photos/400/300?random=1', '', 'Complete piano sonata No. 14 in C-sharp minor.', 23, 4.9),
+  (2, NULL, 'Clair de Lune', 'Claude Debussy', NULL, 0, 'Impressionist', 'Intermediate', 240000, 'https://picsum.photos/400/300?random=2', '', 'From Suite Bergamasque, one of the most beloved piano pieces.', 15, 4.8),
+  (3, NULL, 'Nocturne in E-flat Major', 'Frederic Chopin', NULL, 0, 'Romantic', 'Advanced', 290000, 'https://picsum.photos/400/300?random=3', '', 'Op. 9 No. 2, one of Chopin''s most famous nocturnes.', 12, 4.9),
+  (4, NULL, 'The Entertainer', 'Scott Joplin', NULL, 0, 'Ragtime', 'Intermediate', 210000, 'https://picsum.photos/400/300?random=4', '', 'Classic ragtime piece, perfect for intermediate pianists.', 8, 4.7),
+  (5, NULL, 'Canon in D', 'Johann Pachelbel', NULL, 0, 'Baroque', 'Beginner', 160000, 'https://picsum.photos/400/300?random=5', '', 'Beautiful and accessible arrangement for piano.', 6, 4.6),
+  (6, NULL, 'Rhapsody in Blue', 'George Gershwin', NULL, 0, 'Jazz/Classical', 'Advanced', 400000, 'https://picsum.photos/400/300?random=6', '', 'Iconic fusion of classical music with jazz elements.', 35, 4.9)
 ON DUPLICATE KEY UPDATE title = VALUES(title);
 
 INSERT INTO users (id, name, email, password, role, location, bio, avatar) VALUES
@@ -141,16 +150,16 @@ INSERT INTO users (id, name, email, password, role, location, bio, avatar) VALUE
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
 INSERT INTO purchases (id, user_id, score_id, price, purchase_date) VALUES
-  (1, 1, 1, 19.99, '2024-01-15'),
-  (2, 1, 2, 14.99, '2023-12-20'),
-  (3, 1, 3, 17.99, '2023-11-05')
+  (1, 1, 1, 320000, '2024-01-15'),
+  (2, 1, 2, 240000, '2023-12-20'),
+  (3, 1, 3, 290000, '2023-11-05')
 ON DUPLICATE KEY UPDATE price = VALUES(price);
 
-INSERT INTO orders (id, user_id, total_items, total_amount, status, payment_status) VALUES
-  (1, 1, 2, 34.98, 'pending', 'waiting_payment')
+INSERT INTO orders (id, order_number, user_id, total_items, total_amount, status, payment_status) VALUES
+  (1, 'SMS-1-1700000000', 1, 2, 560000, 'pending', 'waiting_payment')
 ON DUPLICATE KEY UPDATE total_amount = VALUES(total_amount);
 
 INSERT INTO order_items (id, order_id, score_id, score_title, price) VALUES
-  (1, 1, 1, 'Moonlight Sonata', 19.99),
-  (2, 1, 2, 'Clair de Lune', 14.99)
+  (1, 1, 1, 'Moonlight Sonata', 320000),
+  (2, 1, 2, 'Clair de Lune', 240000)
 ON DUPLICATE KEY UPDATE price = VALUES(price);

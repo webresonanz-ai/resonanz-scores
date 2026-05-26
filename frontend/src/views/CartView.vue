@@ -48,7 +48,7 @@
                 </div>
               </div>
               <div class="col-md-3 text-md-center">
-                <span class="price-tag">${{ formatPrice(item.price) }}</span>
+                <span class="price-tag">{{ formatPrice(item.price) }}</span>
               </div>
               <div class="col-md-2 text-md-end">
                 <button
@@ -86,7 +86,7 @@
             </div>
             <div class="summary-row total-row">
               <span>Total</span>
-              <span class="price-tag">${{ formatPrice(cartStore.subtotal) }}</span>
+              <span class="price-tag">{{ formatPrice(cartStore.subtotal) }}</span>
             </div>
 
             <p v-if="cartStore.successMessage" class="text-success small mt-3 mb-0">
@@ -98,6 +98,9 @@
             <p v-if="checkoutMessage" class="text-success small mt-3 mb-0">
               {{ checkoutMessage }}
             </p>
+            <p v-if="paymentError" class="text-danger small mt-3 mb-0">
+              {{ paymentError }}
+            </p>
 
             <button
               class="btn btn-outline-gold w-100 mt-4"
@@ -105,7 +108,7 @@
               :disabled="cartStore.loading"
               @click="proceedCheckout"
             >
-              {{ cartStore.loading ? "Creating order..." : "Proceed to Checkout" }}
+              {{ cartStore.loading ? "Creating order..." : "Proceed to Payment" }}
             </button>
 
             <RouterLink :to="{ name: 'scores' }" class="btn btn-link text-muted w-100 mt-2">
@@ -123,18 +126,19 @@ import { ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
 import { useCartStore } from "../stores/cartStore";
+import { formatPrice } from "../lib/currency.js";
+import { openPaymentModal } from "../lib/payment.js";
 
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const router = useRouter();
 const checkoutMessage = ref("");
-
-function formatPrice(value) {
-  return Number(value || 0).toFixed(2);
-}
+const paymentError = ref("");
 
 async function proceedCheckout() {
   checkoutMessage.value = "";
+  paymentError.value = "";
+  cartStore.error = "";
 
   if (!authStore.isAuthenticated) {
     cartStore.error = "Please login before checkout.";
@@ -144,10 +148,30 @@ async function proceedCheckout() {
 
   try {
     const createdOrder = await cartStore.checkout(authStore.token);
-    await authStore.fetchProfile();
-    checkoutMessage.value = `Order #${createdOrder.id} created with status ${createdOrder.status} and payment ${createdOrder.paymentStatus}.`;
-  } catch {
-    return;
+
+    await openPaymentModal(
+      {
+        id: createdOrder.id,
+        orderNumber: createdOrder.orderNumber,
+        totalAmount: createdOrder.totalAmount,
+        billing_name: authStore.user?.name,
+        billing_email: authStore.user?.email,
+      },
+      {
+        token: authStore.token,
+        user: authStore.user,
+        onComplete: async (result) => {
+          await authStore.fetchProfile();
+          const order = result?.order ?? createdOrder;
+          checkoutMessage.value = `Order ${order.orderNumber || createdOrder.orderNumber} — status ${order.status}, payment ${order.paymentStatus}.`;
+        },
+        onError: (error) => {
+          paymentError.value = error.message;
+        },
+      },
+    );
+  } catch (error) {
+    paymentError.value = error?.message || "Unable to start payment.";
   }
 }
 </script>

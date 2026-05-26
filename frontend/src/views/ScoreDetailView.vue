@@ -60,7 +60,7 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
-              <span class="price-tag detail-price">${{ score.price }}</span>
+              <span class="price-tag detail-price">{{ formatPrice(score.price) }}</span>
               <button class="btn btn-outline-gold px-4 py-2" type="button" @click="handleAddToCart">
                 <i class="bi bi-cart-plus me-2"></i>
                 Add to Cart
@@ -150,6 +150,7 @@ import { fetchPreviewBinary } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 import { useCartStore } from "../stores/cartStore";
 import { useScoreStore } from "../stores/scoreStore";
+import { formatPrice } from "../lib/currency.js";
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 

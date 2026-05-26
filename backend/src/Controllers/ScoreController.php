@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Models\Score;
 use App\Models\User;
+use App\Support\Currency;
 use RuntimeException;
 
 final class ScoreController
@@ -126,7 +127,7 @@ final class ScoreController
                 'is_arranged' => $isArranged ? 1 : 0,
                 'genre' => $genre,
                 'difficulty' => $difficulty,
-                'price' => number_format($price, 2, '.', ''),
+                'price' => Currency::formatStorage($price),
                 'image' => is_array($storedImage) ? $storedImage['relative_path'] : $storedImage,
                 'pdf_path' => $storedPdf['relative_path'],
                 'description' => $description,

@@ -86,12 +86,12 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label text-muted">Price</label>
+                  <label class="form-label text-muted">Price (IDR)</label>
                   <input
                     v-model.number="form.price"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1000"
                     class="form-control"
                     required
                   />
@@ -184,7 +184,7 @@
                     <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                       <h5 class="text-gold mb-0">{{ score.title }}</h5>
                       <div class="d-flex flex-column align-items-end gap-2">
-                        <span class="price-tag">${{ formatPrice(score.price) }}</span>
+                        <span class="price-tag">{{ formatPrice(score.price) }}</span>
                         <span class="status-badge" :class="statusClass(score.approval_status)">
                           {{ statusLabel(score.approval_status) }}
                         </span>
@@ -219,6 +219,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from "vue";
 import { useAuthStore } from "../stores/authStore";
 import { useScoreStore } from "../stores/scoreStore";
+import { formatPrice } from "../lib/currency.js";
 
 const authStore = useAuthStore();
 const scoreStore = useScoreStore();
@@ -372,10 +373,6 @@ async function countPdfPages(file) {
   }
 
   throw new Error("Unable to detect PDF page count.");
-}
-
-function formatPrice(value) {
-  return Number(value || 0).toFixed(2);
 }
 
 function statusLabel(status) {

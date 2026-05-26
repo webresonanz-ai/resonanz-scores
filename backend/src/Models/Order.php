@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Support\Currency;
 use PDO;
 use Throwable;
 
@@ -52,22 +53,25 @@ final class Order
             $lineItems[] = [
                 'score_id' => $scoreId,
                 'score_title' => (string) $score['title'],
-                'price' => number_format($price, 2, '.', ''),
+                'price' => Currency::formatStorage($price),
             ];
             $totalAmount += $price;
         }
+
+        $orderNumber = $this->generateOrderNumber();
 
         try {
             $this->db->beginTransaction();
 
             $orderStatement = $this->db->prepare(
-                'INSERT INTO orders (user_id, total_items, total_amount, status, payment_status)
-                 VALUES (:user_id, :total_items, :total_amount, :status, :payment_status)'
+                'INSERT INTO orders (order_number, user_id, total_items, total_amount, status, payment_status)
+                 VALUES (:order_number, :user_id, :total_items, :total_amount, :status, :payment_status)'
             );
             $orderStatement->execute([
+                'order_number' => $orderNumber,
                 'user_id' => $userId,
                 'total_items' => count($lineItems),
-                'total_amount' => number_format($totalAmount, 2, '.', ''),
+                'total_amount' => Currency::formatStorage($totalAmount),
                 'status' => 'pending',
                 'payment_status' => 'waiting_payment',
             ]);
@@ -103,7 +107,7 @@ final class Order
     public function forUser(int $userId): array
     {
         $statement = $this->db->prepare(
-            'SELECT id, total_items AS totalItems, total_amount AS totalAmount, status, payment_status AS paymentStatus, created_at AS createdAt
+            'SELECT id, order_number AS orderNumber, total_items AS totalItems, total_amount AS totalAmount, status, payment_status AS paymentStatus, created_at AS createdAt
              FROM orders
              WHERE user_id = :user_id
              ORDER BY created_at DESC'
@@ -118,7 +122,7 @@ final class Order
     public function find(int $id): ?array
     {
         $statement = $this->db->prepare(
-            'SELECT id, user_id, total_items AS totalItems, total_amount AS totalAmount, status, payment_status AS paymentStatus, created_at AS createdAt
+            'SELECT id, order_number AS orderNumber, user_id AS userId, total_items AS totalItems, total_amount AS totalAmount, status, payment_status AS paymentStatus, created_at AS createdAt
              FROM orders
              WHERE id = :id
              LIMIT 1'
@@ -136,6 +140,104 @@ final class Order
         $order['items'] = $this->itemsForOrder((int) $order['id']);
 
         return $order;
+    }
+
+    public function findByOrderNumber(string $orderNumber): ?array
+    {
+        $statement = $this->db->prepare(
+            'SELECT id, order_number AS orderNumber, user_id AS userId, total_items AS totalItems, total_amount AS totalAmount, status, payment_status AS paymentStatus, created_at AS createdAt
+             FROM orders
+             WHERE order_number = :order_number
+             LIMIT 1'
+        );
+        $statement->execute([
+            'order_number' => $orderNumber,
+        ]);
+
+        $order = $statement->fetch();
+
+        return is_array($order) ? $order : null;
+    }
+
+    public function findForUser(int $orderId, int $userId): ?array
+    {
+        $order = $this->find($orderId);
+
+        if ($order === null || (int) ($order['userId'] ?? 0) !== $userId) {
+            return null;
+        }
+
+        unset($order['userId']);
+
+        return $order;
+    }
+
+    public function updatePaymentStatus(int $orderId, string $paymentStatus): bool
+    {
+        $statement = $this->db->prepare(
+            'UPDATE orders SET payment_status = :payment_status WHERE id = :id'
+        );
+
+        return $statement->execute([
+            'id' => $orderId,
+            'payment_status' => $paymentStatus,
+        ]);
+    }
+
+    public function updateStatus(int $orderId, string $status): bool
+    {
+        $statement = $this->db->prepare(
+            'UPDATE orders SET status = :status WHERE id = :id'
+        );
+
+        return $statement->execute([
+            'id' => $orderId,
+            'status' => $status,
+        ]);
+    }
+
+    public function applyMidtransStatus(int $orderId, string $transactionStatus): void
+    {
+        $normalized = strtolower(trim($transactionStatus));
+
+        if (in_array($normalized, ['settlement', 'capture'], true)) {
+            $this->updatePaymentStatus($orderId, 'paid');
+            $this->updateStatus($orderId, 'paid');
+            return;
+        }
+
+        if (in_array($normalized, ['deny', 'cancel', 'expire', 'failure'], true)) {
+            $this->updatePaymentStatus($orderId, 'failed');
+            $this->updateStatus($orderId, 'cancelled');
+        }
+    }
+
+    public function cancel(int $orderId): bool
+    {
+        $statement = $this->db->prepare(
+            "UPDATE orders
+             SET status = 'cancelled', payment_status = 'failed'
+             WHERE id = :id
+               AND status = 'pending'
+               AND payment_status = 'waiting_payment'"
+        );
+
+        $statement->execute([
+            'id' => $orderId,
+        ]);
+
+        return $statement->rowCount() > 0;
+    }
+
+    public function isAwaitingPayment(array $order): bool
+    {
+        return ($order['status'] ?? '') === 'pending'
+            && ($order['paymentStatus'] ?? $order['payment_status'] ?? '') === 'waiting_payment';
+    }
+
+    private function generateOrderNumber(): string
+    {
+        return 'SMS-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(3)));
     }
 
     private function findScoresForCheckout(array $scoreIds): array

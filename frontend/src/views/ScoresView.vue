@@ -44,7 +44,7 @@
             <span class="difficulty-badge">{{ score.difficulty }}</span>
           </div>
           <div class="col-md-2 mb-3 mb-md-0">
-            <span class="price-tag">${{ score.price }}</span>
+            <span class="price-tag">{{ formatPrice(score.price) }}</span>
           </div>
           <div class="col-md-2 text-end">
             <RouterLink
@@ -66,6 +66,7 @@ import { RouterLink } from "vue-router";
 import { useScoreStore } from "../stores/scoreStore";
 import ScoreCard from "../components/ScoreCard.vue";
 import ViewToggle from "../components/ViewToggle.vue";
+import { formatPrice } from "../lib/currency.js";
 
 const scoreStore = useScoreStore();
 
